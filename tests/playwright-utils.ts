@@ -71,30 +71,55 @@ export async function waitFor<ReturnValue>(
 }
 
 export const deleteUsers = async (users: Set<string>) => {
-	await prisma.userGameRole.deleteMany({
-		where: { userId: { in: Array.from(users) } },
-	});
+	try {
+		await prisma.userGameRole.deleteMany({
+			where: { userId: { in: Array.from(users) } },
+		});
+	} catch (error) {
+		console.error("Error deleting from userGameRole:");
+	}
 
-	await prisma.ticket.deleteMany({
-		where: { userId: { in: Array.from(users) } },
-	});
+	try {
+		await prisma.ticket.deleteMany({
+			where: { userId: { in: Array.from(users) } },
+		});
+	} catch (error) {
+		console.error("Error deleting from ticket:");
+	}
 
-	await prisma.comment.deleteMany({
-		where: { userId: { in: Array.from(users) } },
-	});
+	try {
+		await prisma.comment.deleteMany({
+			where: { userId: { in: Array.from(users) } },
+		});
+	} catch (error) {
+		console.error("Error deleting from comment:");
+	}
 
-	await prisma.report.deleteMany({
-		where: { userId: { in: Array.from(users) } },
-	});
+	try {
+		await prisma.report.deleteMany({
+			where: { userId: { in: Array.from(users) } },
+		});
+	} catch (error) {
+		console.error("Error deleting from report:");
+	}
 
-	await prisma.userRole.deleteMany({
-		where: { userId: { in: Array.from(users) } },
-	});
+	try {
+		await prisma.userRole.deleteMany({
+			where: { userId: { in: Array.from(users) } },
+		});
+	} catch (error) {
+		console.error("Error deleting from userRole:");
+	}
 
-	await prisma.user.deleteMany({
-		where: { id: { in: Array.from(users) } },
-	});
+	try {
+		await prisma.user.deleteMany({
+			where: { id: { in: Array.from(users) } },
+		});
+	} catch (error) {
+		console.error("Error deleting from user:");
+	}
 }
+
 
 test.afterEach(async () => {
 	await deleteUsers(insertedUsers);
