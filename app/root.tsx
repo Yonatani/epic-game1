@@ -120,13 +120,16 @@ export async function loader({ request }: DataFunctionArgs) {
 						gameRoles: {
 							select: {
 								type: true,
-								power: true,
+								power: true
 							}
 						}
 					}
-				});
+				})
+
+
+
 			},
-			{ timings, type: 'find user', desc: 'find user in root' }
+				{ timings, type: 'find user', desc: 'find user in root' }
 		)
 		: null;
 
@@ -143,8 +146,10 @@ export async function loader({ request }: DataFunctionArgs) {
 	const { confettiId, headers: confettiHeaders } = getConfetti(request)
 
 	const convertgameRolesToObject = () => {
-		const gameRoles = {}
-		for (const gameRole of user?.gameRoles) {
+		if(user?.gameRoles.length === 0) return ({})
+
+		const gameRoles: Record<string, any> = {}
+		for (const gameRole of user?.gameRoles || []) {
 			const {type, ...rest} = gameRole
 			gameRoles[type] = rest
 		}
