@@ -3,7 +3,7 @@ import {createPassword, getUserImages} from '#tests/db-utils.ts';
 
 const prisma = new PrismaClient();
 
-interface RoleData {
+interface UserRoleData {
 	name: string;
 	description: string;
 }
@@ -25,7 +25,7 @@ async function clearDatabase(): Promise<void> {
 	await prisma.verification.deleteMany();
 }
 
-async function createRoleIfNotExists(roleData: RoleData): Promise<string> {
+async function createUserRoleIfNotExists(roleData: UserRoleData): Promise<string> {
 	let existingRole = await prisma.role.findUnique({
 		where: { name: roleData.name },
 	});
@@ -37,6 +37,11 @@ async function createRoleIfNotExists(roleData: RoleData): Promise<string> {
 	return existingRole.id;
 }
 
+// shortcut to delete DB
+// async function mainDeleteAll(): Promise<void> {
+// 	await clearDatabase();
+// }
+
 async function main(): Promise<void> {
 	await clearDatabase();
 
@@ -44,24 +49,14 @@ async function main(): Promise<void> {
 
 	const totalUsers = 10;
 	const roleIds: Record<string, string> = {};
-	const rolesData: RoleData[] = [
+	const rolesData: UserRoleData[] = [
 		{ name: 'admin', description: 'Admin role with full permissions' },
 		{ name: 'editor', description: 'Editor role with limited permissions' },
 		{ name: 'user', description: 'Regular user with minimal permissions' },
 	];
 
 	for (let role of rolesData) {
-		roleIds[role.name] = await createRoleIfNotExists(role);
-	}
-
-	const gameRoleIds: Record<string, string> = {};
-	const gameRolesData: RoleData[] = [
-		{ name: 'artist', description: 'Artist role with full artist power' },
-		{ name: 'critic', description: 'Critic role with full critic power' },
-	];
-
-	for (let role of gameRolesData) {
-		gameRoleIds[role.name] = await createRoleIfNotExists(role);
+		roleIds[role.name] = await createUserRoleIfNotExists(role);
 	}
 
 	const gamePowerArtist = Math.floor(Math.random() * 100);
@@ -84,12 +79,10 @@ async function main(): Promise<void> {
 				create: [{
 					// @ts-ignore
 					type: 'artist',
-					roleId: gameRoleIds.artist,
 					power: gamePowerArtist
 				}, {
 					// @ts-ignore
 					type: 'critic',
-					roleId: gameRoleIds.critic,
 					power: gamePowerCritic
 				}]
 			},
@@ -121,12 +114,10 @@ async function main(): Promise<void> {
 					create: [{
 						// @ts-ignore
 						type: 'artist',
-						roleId: gameRoleIds.artist,
 						power: gamePowerArtist
 					}, {
 						// @ts-ignore
 						type: 'critic',
-						roleId: gameRoleIds.critic,
 						power: gamePowerCritic
 					}]
 				},

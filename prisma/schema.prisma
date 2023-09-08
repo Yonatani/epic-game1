@@ -8,13 +8,13 @@ datasource db {
 }
 
 model User {
-  id         String     @id @default(cuid())
-  email      String     @unique
-  username   String     @unique
+  id         String         @id @default(cuid())
+  email      String         @unique
+  username   String         @unique
   name       String?
-  popularity Int        @default(0)
+  popularity Int            @default(0)
   roles      UserRole[]
-  gameRoles  GameRole[] // New field for game roles
+  gameRoles  UserGameRole[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -30,34 +30,29 @@ model User {
 }
 
 model UserRole {
-  userId String
+  id     String @id @default(cuid())
   roleId String
+  userId String
+
+  role Role @relation(fields: [roleId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+}
+
+model UserGameRole {
+  id     String @id @default(cuid())
+  userId String
+  type   String // Role type, e.g., "artist" or "critic"
+  power  Int    @default(0)
 
   user User @relation(fields: [userId], references: [id])
-  role Role @relation(fields: [roleId], references: [id])
-
-  @@id([userId, roleId])
 }
 
 model Role {
   id          String @id @default(cuid())
-  name        String @unique // e.g. CRITIC_REVIEWER, artist
+  name        String @unique
   description String @default("")
 
-  users    UserRole[] // reverse relation
-  GameRole GameRole[]
-}
-
-model GameRole {
-  userId String
-  roleId String
-  type   String @default("critic")
-  power  Int
-
-  user User @relation(fields: [userId], references: [id])
-  role Role @relation(fields: [roleId], references: [id])
-
-  @@id([userId, roleId])
+  roles UserRole[]
 }
 
 model Note {
@@ -84,7 +79,7 @@ model Ticket {
   id          String @id @default(cuid())
   userId      String
   noteId      String
-  ticketPower Int // Represents the aggregated weight of the ticket
+  ticketPower Int
 
   user User @relation(fields: [userId], references: [id])
   note Note @relation(fields: [noteId], references: [id])
