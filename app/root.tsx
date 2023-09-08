@@ -105,39 +105,56 @@ export async function loader({ request }: DataFunctionArgs) {
 
 	const user = userId
 		? await time(
-				() =>
-					prisma.user.findUniqueOrThrow({
-						select: {
-							id: true,
-							name: true,
-							username: true,
-							image: { select: { id: true } },
-							roles: {
-								select: {
-									name: true,
-									permissions: {
-										select: { entity: true, action: true, access: true },
-									},
-								},
-							},
+			async () => {
+				return await prisma.user.findUnique({
+					where: { id: userId },
+					select: {
+						id: true,
+						name: true,
+						username: true,
+						image: {
+							select: {
+								id: true
+							}
 						},
-						where: { id: userId },
-					}),
-				{ timings, type: 'find user', desc: 'find user in root' },
-		  )
-		: null
+						gameRoles: {
+							select: {
+								type: true,
+								power: true,
+							}
+						}
+					}
+				});
+			},
+			{ timings, type: 'find user', desc: 'find user in root' }
+		)
+		: null;
+
+
 	if (userId && !user) {
 		console.info('something weird happened')
 		// something weird happened... The user is authenticated but we can't find
 		// them in the database. Maybe they were deleted? Let's log them out.
 		await authenticator.logout(request, { redirectTo: '/' })
 	}
+
+	console.log('user',user?.gameRoles)
 	const { toast, headers: toastHeaders } = await getToast(request)
 	const { confettiId, headers: confettiHeaders } = getConfetti(request)
 
+	const convertgameRolesToObject = () => {
+		const gameRoles = {}
+		for (const gameRole of user?.gameRoles) {
+			const {type, ...rest} = gameRole
+			gameRoles[type] = rest
+		}
+
+		return gameRoles
+	}
+
 	return json(
 		{
-			user,
+			user: {...user, gameRoles: user ? convertgameRolesToObject() : {}},
 			requestInfo: {
 				hints: getHints(request),
 				origin: getDomainUrl(request),
@@ -286,6 +303,7 @@ export default withSentry(App)
 
 function UserDropdown() {
 	const user = useUser()
+	console.log('userDropdown user', user)
 	const submit = useSubmit()
 	const formRef = useRef<HTMLFormElement>(null)
 	return (

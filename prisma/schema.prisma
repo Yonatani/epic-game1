@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,10 +8,14 @@ datasource db {
 }
 
 model User {
-  id       String  @id @default(cuid())
-  email    String  @unique
-  username String  @unique
-  name     String?
+  id          String     @id @default(cuid())
+  email       String     @unique
+  username    String     @unique
+  name        String?
+  ticketPower Int        @default(1) // default is 1 for audience-like users
+  popularity  Int        @default(0)
+  roles       UserRole[]
+  gameRoles   GameRole[] // New field for game roles
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -22,9 +23,42 @@ model User {
   image       UserImage?
   password    Password?
   notes       Note[]
-  roles       Role[]
   sessions    Session[]
   connections Connection[]
+  tickets     Ticket[]
+  comments    Comment[]
+  reports     Report[]
+}
+
+model UserRole {
+  userId String
+  roleId String
+
+  user User @relation(fields: [userId], references: [id])
+  role Role @relation(fields: [roleId], references: [id])
+
+  @@id([userId, roleId])
+}
+
+model Role {
+  id          String @id @default(cuid())
+  name        String @unique // e.g. CRITIC_REVIEWER, artist
+  description String @default("")
+
+  users    UserRole[] // reverse relation
+  GameRole GameRole[]
+}
+
+model GameRole {
+  userId String
+  roleId String
+  type   String @default("critic")
+  power  Int
+
+  user User @relation(fields: [userId], references: [id])
+  role Role @relation(fields: [roleId], references: [id])
+
+  @@id([userId, roleId])
 }
 
 model Note {
@@ -38,12 +72,43 @@ model Note {
   owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   ownerId String
 
-  images NoteImage[]
+  tickets  Ticket[]
+  images   NoteImage[]
+  comments Comment[]
+  reports  Report[]
 
-  // non-unique foreign key
   @@index([ownerId])
-  // This helps our order by in the user search a LOT
   @@index([ownerId, updatedAt])
+}
+
+model Ticket {
+  id          String @id @default(cuid())
+  userId      String
+  noteId      String
+  ticketPower Int // Represents the aggregated weight of the ticket
+
+  user User @relation(fields: [userId], references: [id])
+  note Note @relation(fields: [noteId], references: [id])
+}
+
+model Comment {
+  id      String @id @default(cuid())
+  userId  String
+  noteId  String
+  content String
+
+  user User @relation(fields: [userId], references: [id])
+  note Note @relation(fields: [noteId], references: [id])
+}
+
+model Report {
+  id     String @id @default(cuid())
+  noteId String
+  userId String
+  reason String
+
+  user User @relation(fields: [userId], references: [id])
+  note Note @relation(fields: [noteId], references: [id])
 }
 
 model NoteImage {
@@ -58,7 +123,6 @@ model NoteImage {
   note   Note   @relation(fields: [noteId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   noteId String
 
-  // non-unique foreign key
   @@index([noteId])
 }
 
@@ -91,61 +155,18 @@ model Session {
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   userId String
-
-  // non-unique foreign key
-  @@index([userId])
-}
-
-model Permission {
-  id          String @id @default(cuid())
-  action      String // e.g. create, read, update, delete
-  entity      String // e.g. note, user, etc.
-  access      String // e.g. own or any
-  description String @default("")
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  roles Role[]
-
-  @@unique([action, entity, access])
-}
-
-model Role {
-  id          String @id @default(cuid())
-  name        String @unique
-  description String @default("")
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  users       User[]
-  permissions Permission[]
 }
 
 model Verification {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
 
-  /// The type of verification, e.g. "email" or "phone"
-  type String
-
-  /// The thing we're trying to verify, e.g. a user's email or phone number
-  target String
-
-  /// The secret key used to generate the otp
-  secret String
-
-  /// The algorithm used to generate the otp
+  type      String
+  target    String
+  secret    String
   algorithm String
-
-  /// The number of digits in the otp
-  digits Int
-
-  /// The number of seconds the otp is valid for
-  period Int
-
-  /// When it's safe to delete this verification
+  digits    Int
+  period    Int
   expiresAt DateTime?
 
   @@unique([target, type])
