@@ -14,7 +14,8 @@ model User {
   name       String?
   popularity Int            @default(0)
   roles      UserRole[]
-  gameRoles  UserGameRole[]
+gameRoles    UserGameRole[]
+
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -44,7 +45,7 @@ model UserGameRole {
   type   String // Role type, e.g., "artist" or "critic"
   power  Int    @default(0)
 
-  user User @relation(fields: [userId], references: [id])
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Role {

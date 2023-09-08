@@ -1,9 +1,8 @@
 import { faker } from '@faker-js/faker'
 import { expect, test } from '@playwright/test'
-import { prisma } from '#app/utils/db.server.ts'
 import { invariant } from '#app/utils/misc.tsx'
 import { readEmail } from '#tests/mocks/utils.ts'
-import { createUser, insertNewUser } from '#tests/playwright-utils.ts'
+import {createUser, deleteUsers, insertNewUser} from '#tests/playwright-utils.ts'
 
 const urlRegex = /(?<url>https?:\/\/[^\s$.?#].[^\s]*)/
 function extractUrl(text: string) {
@@ -23,9 +22,7 @@ function getOnboardingData() {
 const usernamesToDelete = new Set<string>()
 
 test.afterEach(async () => {
-	for (const username of usernamesToDelete) {
-		await prisma.user.delete({ where: { username } })
-	}
+	await deleteUsers(usernamesToDelete)
 	usernamesToDelete.clear()
 })
 

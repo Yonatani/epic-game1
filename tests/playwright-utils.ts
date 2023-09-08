@@ -70,9 +70,33 @@ export async function waitFor<ReturnValue>(
 	throw lastError
 }
 
-test.afterEach(async () => {
+export const deleteUsers = async (users: Set<string>) => {
+	await prisma.userGameRole.deleteMany({
+		where: { userId: { in: Array.from(users) } },
+	});
+
+	await prisma.ticket.deleteMany({
+		where: { userId: { in: Array.from(users) } },
+	});
+
+	await prisma.comment.deleteMany({
+		where: { userId: { in: Array.from(users) } },
+	});
+
+	await prisma.report.deleteMany({
+		where: { userId: { in: Array.from(users) } },
+	});
+
+	await prisma.userRole.deleteMany({
+		where: { userId: { in: Array.from(users) } },
+	});
+
 	await prisma.user.deleteMany({
-		where: { id: { in: Array.from(insertedUsers) } },
-	})
-	insertedUsers.clear()
+		where: { id: { in: Array.from(users) } },
+	});
+}
+
+test.afterEach(async () => {
+	await deleteUsers(insertedUsers);
+	insertedUsers.clear();
 })

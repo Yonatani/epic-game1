@@ -8,14 +8,14 @@ interface UserRoleData {
 	description: string;
 }
 
-async function clearDatabase(): Promise<void> {
+export async function clearDatabase(): Promise<void> {
 	await prisma.ticket.deleteMany();
 	await prisma.comment.deleteMany();
 	await prisma.report.deleteMany();
 	await prisma.noteImage.deleteMany();
 	await prisma.note.deleteMany();
 	await prisma.userRole.deleteMany();
-	await prisma.gameRole.deleteMany();
+	await prisma.userGameRole.deleteMany();
 	await prisma.userImage.deleteMany();
 	await prisma.password.deleteMany();
 	await prisma.session.deleteMany();
