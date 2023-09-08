@@ -54,7 +54,7 @@ test('onboarding with link', async ({ page }) => {
 	const email = await readEmail(onboardingData.email)
 	invariant(email, 'Email not found')
 	expect(email.to).toBe(onboardingData.email.toLowerCase())
-	expect(email.from).toBe('hello@epic-game1-55b1.fly.dev')
+	expect(email.from).toBe('hello@epic-game.co')
 	expect(email.subject).toMatch(/welcome/i)
 	const onboardingUrl = extractUrl(email.text)
 	invariant(onboardingUrl, 'Onboarding URL not found')
@@ -108,7 +108,7 @@ test('onboarding with a short code', async ({ page }) => {
 	const email = await readEmail(onboardingData.email)
 	invariant(email, 'Email not found')
 	expect(email.to).toBe(onboardingData.email.toLowerCase())
-	expect(email.from).toBe('hello@epic-game1-55b1.fly.dev')
+	expect(email.from).toBe('hello@epic-game.co')
 	expect(email.subject).toMatch(/welcome/i)
 	const codeMatch = email.text.match(
 		/Here's your verification code: (?<code>\d+)/,
@@ -157,7 +157,7 @@ test('reset password with a link', async ({ page }) => {
 	invariant(email, 'Email not found')
 	expect(email.subject).toMatch(/password reset/i)
 	expect(email.to).toBe(user.email.toLowerCase())
-	expect(email.from).toBe('hello@epic-game1-55b1.fly.dev')
+	expect(email.from).toBe('hello@epic-game.co')
 	const resetPasswordUrl = extractUrl(email.text)
 	invariant(resetPasswordUrl, 'Reset password URL not found')
 	await page.goto(resetPasswordUrl)
@@ -208,7 +208,7 @@ test('reset password with a short code', async ({ page }) => {
 	invariant(email, 'Email not found')
 	expect(email.subject).toMatch(/password reset/i)
 	expect(email.to).toBe(user.email)
-	expect(email.from).toBe('hello@epic-game1-55b1.fly.dev')
+	expect(email.from).toBe('hello@epic-game.co')
 	const codeMatch = email.text.match(
 		/Here's your verification code: (?<code>\d+)/,
 	)
