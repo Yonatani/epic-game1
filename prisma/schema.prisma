@@ -8,13 +8,13 @@ datasource db {
 }
 
 model User {
-  id          String     @id @default(cuid())
-  email       String     @unique
-  username    String     @unique
-  name        String?
-  popularity  Int        @default(0)
-  roles       UserRole[]
-  gameRoles   GameRole[] // New field for game roles
+  id         String     @id @default(cuid())
+  email      String     @unique
+  username   String     @unique
+  name       String?
+  popularity Int        @default(0)
+  roles      UserRole[]
+  gameRoles  GameRole[] // New field for game roles
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
