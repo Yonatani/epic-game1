@@ -14,8 +14,7 @@ model User {
   name       String?
   popularity Int            @default(0)
   roles      UserRole[]
-gameRoles    UserGameRole[]
-
+  gameRoles  UserGameRole[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -35,8 +34,9 @@ model UserRole {
   roleId String
   userId String
 
-  role Role @relation(fields: [roleId], references: [id])
-  user User @relation(fields: [userId], references: [id])
+  role        Role         @relation(fields: [roleId], references: [id])
+  user        User         @relation(fields: [userId], references: [id])
+  permissions Permission[]
 }
 
 model UserGameRole {
@@ -45,7 +45,20 @@ model UserGameRole {
   type   String // Role type, e.g., "artist" or "critic"
   power  Int    @default(0)
 
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Permission {
+  id          String     @id @default(cuid())
+  action      String // e.g. create, read, update, delete
+  entity      String // e.g. note, user, etc.
+  access      String // e.g. own or any
+  description String     @default("")
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  roles       UserRole[]
+
+  @@unique([action, entity, access])
 }
 
 model Role {

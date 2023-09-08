@@ -122,6 +122,13 @@ export async function loader({ request }: DataFunctionArgs) {
 								type: true,
 								power: true
 							}
+						},
+						roles: {
+							select: {
+								id: true,
+								permissions: true,
+								role: true
+							}
 						}
 					}
 				})
