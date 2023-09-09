@@ -8,32 +8,24 @@ interface UserRoleData {
 	description: string;
 }
 
-export async function clearDatabase(): Promise<void> {
-	const entities = [
-		{ name: 'user', action: () => prisma.user.deleteMany() },
-		{ name: 'userRole', action: () => prisma.userRole.deleteMany() },
-		{ name: 'userGameRole', action: () => prisma.userGameRole.deleteMany() },
-		{ name: 'note', action: () => prisma.note.deleteMany() },
-		{ name: 'password', action: () => prisma.password.deleteMany() },
-		{ name: 'ticket', action: () => prisma.ticket.deleteMany() },
-		{ name: 'comment', action: () => prisma.comment.deleteMany() },
-		{ name: 'report', action: () => prisma.report.deleteMany() },
-		{ name: 'noteImage', action: () => prisma.noteImage.deleteMany() },
-		{ name: 'userImage', action: () => prisma.userImage.deleteMany() },
-		{ name: 'session', action: () => prisma.session.deleteMany() },
-		{ name: 'connection', action: () => prisma.connection.deleteMany() },
-		{ name: 'role', action: () => prisma.role.deleteMany() },
-		{ name: 'verification', action: () => prisma.verification.deleteMany() },
-	];
-
-	for (const entity of entities) {
-		try {
-			await entity.action();
-		} catch (error) {
-			console.error(`Error deleting from ${entity.name}:`);
-		}
-	}
+export async function clearDatabase() {
+	await prisma.noteImage.deleteMany();
+	await prisma.userImage.deleteMany();
+	await prisma.session.deleteMany();
+	await prisma.password.deleteMany();
+	await prisma.verification.deleteMany();
+	await prisma.connection.deleteMany();
+	await prisma.ticket.deleteMany();
+	await prisma.report.deleteMany();
+	await prisma.comment.deleteMany();
+	await prisma.note.deleteMany();
+	await prisma.userGameRole.deleteMany();
+	await prisma.userRole.deleteMany();
+	await prisma.permission.deleteMany();
+	await prisma.role.deleteMany();
+	await prisma.user.deleteMany();
 }
+
 
 
 async function createUserRoleIfNotExists(roleData: UserRoleData): Promise<string> {
