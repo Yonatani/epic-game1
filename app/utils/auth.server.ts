@@ -168,34 +168,51 @@ export async function signupWithConnection({
 	providerName: Connection['providerName']
 	imageUrl?: string
 }) {
-	const session = await prisma.session.create({
-		data: {
-			expirationDate: getSessionExpirationDate(),
-			user: {
-				create: {
-					email: email.toLowerCase(),
-					username: username.toLowerCase(),
-					name,
-					roles: {
-						create: {
-							role: {
-								connect: {
-									name: "user"
-								}
-							}
-						}
+	try {
+		const existingRole = await prisma.role.findUnique({
+			where: { name: 'user' },
+		});
+
+		if(!existingRole) {
+			throw new Error('"User" role does not exist')
+		}
+
+		const session = await prisma.session.create({
+			data: {
+				expirationDate: getSessionExpirationDate(),
+				user: {
+					create: {
+						email: email.toLowerCase(),
+						username: username.toLowerCase(),
+						name,
+						roles: { create: { roleId: existingRole.id } },
+						gameRoles: {
+							create: [{
+								// @ts-ignore
+								type: 'artist',
+								power: 1
+							}, {
+								// @ts-ignore
+								type: 'critic',
+								power: 1
+							}]
+						},
+						connections: { create: { providerId, providerName } },
+						image: imageUrl
+							? { create: await downloadFile(imageUrl) }
+							: undefined,
 					},
-					connections: { create: { providerId, providerName } },
-					image: imageUrl
-						? { create: await downloadFile(imageUrl) }
-						: undefined,
 				},
 			},
-		},
-		select: { id: true, expirationDate: true },
-	})
+			select: { id: true, expirationDate: true },
+		})
 
-	return session
+		return session
+	}
+	catch (error) {
+		console.error(`Error creating user with connection:`)
+		throw error
+	}
 }
 
 export async function logout(
