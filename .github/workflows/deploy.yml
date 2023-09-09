@@ -117,7 +117,7 @@ jobs:
             }}
 
       - name: 🌱 Seed Database
-        if: steps.db-cache.outputs.cache-hit != 'true'
+#        if: steps.db-cache.outputs.cache-hit != 'true'
         run: npx prisma db seed
         env:
           MINIMAL_SEED: true

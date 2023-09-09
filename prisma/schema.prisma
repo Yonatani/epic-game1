@@ -8,82 +8,74 @@ datasource db {
 }
 
 model User {
-  id         String         @id @default(cuid())
-  email      String         @unique
-  username   String         @unique
-  name       String?
-  popularity Int            @default(0)
-  roles      UserRole[]
-  gameRoles  UserGameRole[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  image       UserImage?
-  password    Password?
-  notes       Note[]
-  sessions    Session[]
-  connections Connection[]
-  tickets     Ticket[]
+  id          String         @id @default(cuid())
+  email       String         @unique
+  username    String         @unique
+  name        String?
+  popularity  Int            @default(0)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
   comments    Comment[]
+  connections Connection[]
+  notes       Note[]
+  password    Password?
   reports     Report[]
+  sessions    Session[]
+  tickets     Ticket[]
+  gameRoles   UserGameRole[]
+  image       UserImage?
+  roles       UserRole[]
 }
 
 model UserRole {
-  id     String @id @default(cuid())
-  roleId String
-  userId String
-
-  role        Role         @relation(fields: [roleId], references: [id])
+  id          String       @id @default(cuid())
+  roleId      String
+  userId      String
   user        User         @relation(fields: [userId], references: [id])
-  permissions Permission[]
+  role        Role         @relation(fields: [roleId], references: [id])
+  permissions Permission[] @relation("PermissionToUserRole")
 }
 
 model UserGameRole {
   id     String @id @default(cuid())
   userId String
-  type   String // Role type, e.g., "artist" or "critic"
+  type   String
   power  Int    @default(0)
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Permission {
   id          String     @id @default(cuid())
-  action      String // e.g. create, read, update, delete
-  entity      String // e.g. note, user, etc.
-  access      String // e.g. own or any
+  action      String
+  entity      String
+  access      String
   description String     @default("")
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
-  roles       UserRole[]
+  roles       UserRole[] @relation("PermissionToUserRole")
 
   @@unique([action, entity, access])
 }
 
 model Role {
-  id          String @id @default(cuid())
-  name        String @unique
-  description String @default("")
-
-  roles UserRole[]
+  id          String     @id @default(cuid())
+  name        String     @unique
+  description String     @default("")
+  roles       UserRole[]
 }
 
 model Note {
-  id      String @id @default(cuid())
-  title   String
-  content String
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  ownerId String
-
-  tickets  Ticket[]
-  images   NoteImage[]
-  comments Comment[]
-  reports  Report[]
+  id        String      @id @default(cuid())
+  title     String
+  content   String
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  ownerId   String
+  comments  Comment[]
+  owner     User        @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  images    NoteImage[]
+  reports   Report[]
+  tickets   Ticket[]
 
   @@index([ownerId])
   @@index([ownerId, updatedAt])
@@ -94,9 +86,8 @@ model Ticket {
   userId      String
   noteId      String
   ticketPower Int
-
-  user User @relation(fields: [userId], references: [id])
-  note Note @relation(fields: [noteId], references: [id])
+  note        Note   @relation(fields: [noteId], references: [id])
+  user        User   @relation(fields: [userId], references: [id])
 }
 
 model Comment {
@@ -104,9 +95,8 @@ model Comment {
   userId  String
   noteId  String
   content String
-
-  user User @relation(fields: [userId], references: [id])
-  note Note @relation(fields: [noteId], references: [id])
+  note    Note   @relation(fields: [noteId], references: [id])
+  user    User   @relation(fields: [userId], references: [id])
 }
 
 model Report {
@@ -114,61 +104,52 @@ model Report {
   noteId String
   userId String
   reason String
-
-  user User @relation(fields: [userId], references: [id])
-  note Note @relation(fields: [noteId], references: [id])
+  note   Note   @relation(fields: [noteId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
 }
 
 model NoteImage {
-  id          String  @id @default(cuid())
+  id          String   @id @default(cuid())
   altText     String?
   contentType String
   blob        Bytes
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  note   Note   @relation(fields: [noteId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  noteId String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  noteId      String
+  note        Note     @relation(fields: [noteId], references: [id], onDelete: Cascade)
 
   @@index([noteId])
 }
 
 model UserImage {
-  id          String  @id @default(cuid())
+  id          String   @id @default(cuid())
   altText     String?
   contentType String
   blob        Bytes
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  userId String @unique
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Password {
-  hash String
-
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  hash   String
   userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Session {
   id             String   @id @default(cuid())
   expirationDate DateTime
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  userId String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Verification {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-
+  id        String    @id @default(cuid())
+  createdAt DateTime  @default(now())
   type      String
   target    String
   secret    String
@@ -181,15 +162,13 @@ model Verification {
 }
 
 model Connection {
-  id           String @id @default(cuid())
+  id           String   @id @default(cuid())
   providerName String
-  providerId   String @unique
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  userId String
+  providerId   String   @unique
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([providerName, providerId])
   @@unique([providerId, userId])
