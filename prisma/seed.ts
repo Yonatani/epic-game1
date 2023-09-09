@@ -15,15 +15,15 @@ export async function clearDatabase(): Promise<void> {
 		{ name: 'userGameRole', action: () => prisma.userGameRole.deleteMany() },
 		{ name: 'note', action: () => prisma.note.deleteMany() },
 		{ name: 'password', action: () => prisma.password.deleteMany() },
-		// { name: 'ticket', action: () => prisma.ticket.deleteMany() },
-		// { name: 'comment', action: () => prisma.comment.deleteMany() },
-		// { name: 'report', action: () => prisma.report.deleteMany() },
-		// { name: 'noteImage', action: () => prisma.noteImage.deleteMany() },
-		// { name: 'userImage', action: () => prisma.userImage.deleteMany() },
-		// { name: 'session', action: () => prisma.session.deleteMany() },
-		// { name: 'connection', action: () => prisma.connection.deleteMany() },
-		// { name: 'role', action: () => prisma.role.deleteMany() },
-		// { name: 'verification', action: () => prisma.verification.deleteMany() },
+		{ name: 'ticket', action: () => prisma.ticket.deleteMany() },
+		{ name: 'comment', action: () => prisma.comment.deleteMany() },
+		{ name: 'report', action: () => prisma.report.deleteMany() },
+		{ name: 'noteImage', action: () => prisma.noteImage.deleteMany() },
+		{ name: 'userImage', action: () => prisma.userImage.deleteMany() },
+		{ name: 'session', action: () => prisma.session.deleteMany() },
+		{ name: 'connection', action: () => prisma.connection.deleteMany() },
+		{ name: 'role', action: () => prisma.role.deleteMany() },
+		{ name: 'verification', action: () => prisma.verification.deleteMany() },
 	];
 
 	for (const entity of entities) {
@@ -133,11 +133,9 @@ async function main(): Promise<void> {
 				roles: { create: { roleId: roleIds[roleName] } },
 				gameRoles: {
 					create: [{
-						// @ts-ignore
 						type: 'artist',
 						power: gamePowerArtist
 					}, {
-						// @ts-ignore
 						type: 'critic',
 						power: gamePowerCritic
 					}]
