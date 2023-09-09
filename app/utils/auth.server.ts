@@ -122,14 +122,6 @@ export async function signup({
 }) {
 	const hashedPassword = await getPasswordHash(password)
 
-	const existingRole = await prisma.role.findUnique({
-		where: { name: 'user' },
-	});
-
-	if(!existingRole) {
-		throw new Error('"User" role does not exist')
-	}
-
 	const session = await prisma.session.create({
 		data: {
 			expirationDate: getSessionExpirationDate(),
@@ -138,14 +130,20 @@ export async function signup({
 					email: email.toLowerCase(),
 					username: username.toLowerCase(),
 					name,
-					roles: { create: { roleId: existingRole.id } },
+					roles: {
+						create: {
+							role: {
+								connect: {
+									name: "user"
+								}
+							}
+						}
+					},
 					gameRoles: {
 						create: [{
-							// @ts-ignore
 							type: 'artist',
 							power: 1
 						}, {
-							// @ts-ignore
 							type: 'critic',
 							power: 1
 						}]
@@ -196,14 +194,20 @@ export async function signupWithConnection({
 						email: email.toLowerCase(),
 						username: username.toLowerCase(),
 						name,
-						roles: { create: { roleId: existingRole.id } },
+						roles: {
+							create: {
+								role: {
+									connect: {
+										name: "user"
+									}
+								}
+							}
+						},
 						gameRoles: {
 							create: [{
-								// @ts-ignore
 								type: 'artist',
 								power: 1
 							}, {
-								// @ts-ignore
 								type: 'critic',
 								power: 1
 							}]

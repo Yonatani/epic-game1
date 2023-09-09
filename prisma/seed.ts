@@ -100,11 +100,9 @@ async function main(): Promise<void> {
 			roles: { create: { roleId: roleIds.admin } },
 			gameRoles: {
 				create: [{
-					// @ts-ignore
 					type: 'artist',
 					power: gamePowerArtist
 				}, {
-					// @ts-ignore
 					type: 'critic',
 					power: gamePowerCritic
 				}]
