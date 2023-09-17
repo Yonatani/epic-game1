@@ -133,7 +133,7 @@ export async function loader({ request, params }: DataFunctionArgs) {
 		)
 	}
 
-	// this is a new user, so let's get them onboarded
+	// this is a new user, so let's get them onboarded.
 	const verifySession = await verifySessionStorage.getSession(
 		request.headers.get('cookie'),
 	)
