@@ -8,23 +8,23 @@ datasource db {
 }
 
 model User {
-  id          String         @id @default(cuid())
-  email       String         @unique
-  username    String         @unique
-  name        String?
-  popularity  Int            @default(0)
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-  comments    Comment[]
-  connections Connection[]
-  notes       Note[]
-  password    Password?
-  reports     Report[]
-  sessions    Session[]
-  tickets     Ticket[]
-  gameRoles   UserGameRole[]
-  image       UserImage?
-  roles       UserRole[]
+  id            String         @id @default(cuid())
+  email         String         @unique
+  username      String         @unique
+  name          String?
+  popularity    Int            @default(0)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  connections   Connection[]
+  password      Password?
+  reports       Report[]
+  sessions      Session[]
+  tickets       Ticket[]
+  gameRoles     UserGameRole[]
+  image         UserImage?
+  roles         UserRole[]
+  videos        Video[]
+  videoComments VideoComment[]
 }
 
 model UserRole {
@@ -64,61 +64,30 @@ model Role {
   roles       UserRole[]
 }
 
-model Note {
-  id        String      @id @default(cuid())
-  title     String
-  content   String
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
-  ownerId   String
-  comments  Comment[]
-  owner     User        @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  images    NoteImage[]
-  reports   Report[]
-  tickets   Ticket[]
-
-  @@index([ownerId])
-  @@index([ownerId, updatedAt])
+model Video {
+  id           String         @id @default(cuid())
+  title        String
+  description  String?
+  videoLink    String // Link to the video
+  thumbnail    String? // Optional link to a thumbnail or preview image
+  contentType  String // Video format or MIME type
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  ownerId      String
+  owner        User           @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  comments     VideoComment[]
+  reports      Report[]
+  tickets      Ticket[]
+  totalTickets Int            @default(0)
 }
 
-model Ticket {
-  id          String @id @default(cuid())
-  userId      String
-  noteId      String
-  ticketPower Int
-  note        Note   @relation(fields: [noteId], references: [id])
-  user        User   @relation(fields: [userId], references: [id])
-}
-
-model Comment {
+model VideoComment {
   id      String @id @default(cuid())
   userId  String
-  noteId  String
+  videoId String
   content String
-  note    Note   @relation(fields: [noteId], references: [id])
+  video   Video  @relation(fields: [videoId], references: [id])
   user    User   @relation(fields: [userId], references: [id])
-}
-
-model Report {
-  id     String @id @default(cuid())
-  noteId String
-  userId String
-  reason String
-  note   Note   @relation(fields: [noteId], references: [id])
-  user   User   @relation(fields: [userId], references: [id])
-}
-
-model NoteImage {
-  id          String   @id @default(cuid())
-  altText     String?
-  contentType String
-  blob        Bytes
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  noteId      String
-  note        Note     @relation(fields: [noteId], references: [id], onDelete: Cascade)
-
-  @@index([noteId])
 }
 
 model UserImage {
@@ -172,4 +141,31 @@ model Connection {
 
   @@unique([providerName, providerId])
   @@unique([providerId, userId])
+}
+
+model Report {
+  id      String @id @default(cuid())
+  videoId String
+  userId  String
+  reason  String
+  video   Video  @relation(fields: [videoId], references: [id])
+  user    User   @relation(fields: [userId], references: [id])
+}
+
+model Ticket {
+  id          String       @id @default(cuid())
+  videoId     String
+  userId      String
+  totalPower  Int
+  video       Video        @relation(fields: [videoId], references: [id])
+  user        User         @relation(fields: [userId], references: [id])
+  roleTickets RoleTicket[]
+}
+
+model RoleTicket {
+  id       String @id @default(cuid())
+  ticketId String
+  roleType String // e.g., "Artist", "Critic", etc.
+  power    Int
+  ticket   Ticket @relation(fields: [ticketId], references: [id])
 }

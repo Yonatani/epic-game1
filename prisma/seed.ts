@@ -9,7 +9,6 @@ interface UserRoleData {
 }
 
 export async function clearDatabase() {
-	await prisma.noteImage.deleteMany();
 	await prisma.userImage.deleteMany();
 	await prisma.session.deleteMany();
 	await prisma.password.deleteMany();
@@ -17,8 +16,7 @@ export async function clearDatabase() {
 	await prisma.connection.deleteMany();
 	await prisma.ticket.deleteMany();
 	await prisma.report.deleteMany();
-	await prisma.comment.deleteMany();
-	await prisma.note.deleteMany();
+	await prisma.videoComment.deleteMany();
 	await prisma.userGameRole.deleteMany();
 	await prisma.userRole.deleteMany();
 	await prisma.permission.deleteMany();
@@ -82,12 +80,6 @@ async function main(): Promise<void> {
 			name: 'Kody Web',
 			email: 'kody@web.com',
 			username: 'kody',
-			notes: {
-				create: {
-					title: 'First note',
-					content: 'This is the first note created.',
-				},
-			},
 			password: { create: createPassword('kodylovesyou') },
 			roles: { create: { roleId: roleIds.admin } },
 			gameRoles: {
