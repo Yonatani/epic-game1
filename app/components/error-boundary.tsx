@@ -35,7 +35,6 @@ export function GeneralErrorBoundary({
 		<div className="container flex items-center justify-center p-20 text-h2">
 			{isRouteErrorResponse(error)
 				? (statusHandlers?.[error.status] ?? defaultStatusHandler)({
-					// @ts-ignore
 						error,
 						params,
 				  })

@@ -18,7 +18,8 @@ afterEach(async () => {
 	prisma.user.deleteMany()
 	prisma.userRole.deleteMany()
 	prisma.userGameRole.deleteMany()
-	prisma.note.deleteMany()
+	prisma.videoComment.deleteMany()
+	prisma.noteComment.deleteMany()
 	prisma.password.deleteMany()
 })
 

@@ -1,4 +1,3 @@
-// @ts-ignore
 import matchers from '@testing-library/jest-dom/matchers.js'
 import * as setCookieParser from 'set-cookie-parser'
 import { expect } from 'vitest'
