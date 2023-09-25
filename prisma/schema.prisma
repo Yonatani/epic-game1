@@ -25,6 +25,8 @@ model User {
   roles         UserRole[]
   videos        Video[]
   videoComments VideoComment[]
+  notes         Note[]
+  NoteComment   NoteComment[]
 }
 
 model UserRole {
@@ -64,6 +66,23 @@ model Role {
   roles       UserRole[]
 }
 
+model Note {
+  id        String        @id @default(cuid())
+  title     String
+  content   String
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  ownerId   String
+  comments  NoteComment[]
+  owner     User          @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  images    NoteImage[]
+  reports   Report[]
+  tickets   Ticket[]
+
+  @@index([ownerId])
+  @@index([ownerId, updatedAt])
+}
+
 model Video {
   id           String         @id @default(cuid())
   title        String
@@ -81,6 +100,15 @@ model Video {
   totalTickets Int            @default(0)
 }
 
+model NoteComment {
+  id      String @id @default(cuid())
+  userId  String
+  noteId  String
+  content String
+  note    Note   @relation(fields: [noteId], references: [id])
+  user    User   @relation(fields: [userId], references: [id])
+}
+
 model VideoComment {
   id      String @id @default(cuid())
   userId  String
@@ -88,6 +116,19 @@ model VideoComment {
   content String
   video   Video  @relation(fields: [videoId], references: [id])
   user    User   @relation(fields: [userId], references: [id])
+}
+
+model NoteImage {
+  id          String   @id @default(cuid())
+  altText     String?
+  contentType String
+  blob        Bytes
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  noteId      String
+  note        Note     @relation(fields: [noteId], references: [id], onDelete: Cascade)
+
+  @@index([noteId])
 }
 
 model UserImage {
@@ -144,12 +185,14 @@ model Connection {
 }
 
 model Report {
-  id      String @id @default(cuid())
+  id      String  @id @default(cuid())
   videoId String
   userId  String
   reason  String
-  video   Video  @relation(fields: [videoId], references: [id])
-  user    User   @relation(fields: [userId], references: [id])
+  video   Video   @relation(fields: [videoId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+  Note    Note?   @relation(fields: [noteId], references: [id])
+  noteId  String?
 }
 
 model Ticket {
@@ -160,6 +203,8 @@ model Ticket {
   video       Video        @relation(fields: [videoId], references: [id])
   user        User         @relation(fields: [userId], references: [id])
   roleTickets RoleTicket[]
+  Note        Note?        @relation(fields: [noteId], references: [id])
+  noteId      String?
 }
 
 model RoleTicket {
