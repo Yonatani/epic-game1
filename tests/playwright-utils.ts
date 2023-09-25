@@ -88,7 +88,15 @@ export const deleteUsers = async (users: Set<string>) => {
 	}
 
 	try {
-		await prisma.comment.deleteMany({
+		await prisma.videoComment.deleteMany({
+			where: { userId: { in: Array.from(users) } },
+		});
+	} catch (error) {
+		console.error("Error deleting from comment:");
+	}
+
+	try {
+		await prisma.noteComment.deleteMany({
 			where: { userId: { in: Array.from(users) } },
 		});
 	} catch (error) {
