@@ -2,6 +2,8 @@ import 'dotenv/config'
 import 'source-map-support/register.js'
 import './db-setup.ts'
 import '#app/utils/env.server.ts'
+import '@testing-library/jest-dom/extend-expect'
+
 // we need these to be imported first 👆
 
 import { installGlobals } from '@remix-run/node'
