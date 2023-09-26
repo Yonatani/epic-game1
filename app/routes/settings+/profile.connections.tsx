@@ -32,7 +32,7 @@ async function userCanDeleteConnections(userId: string) {
 		},
 		where: { id: userId },
 	})
-	// user can delete their connections if they have a password
+	// user can delete their connections if they have a password.
 	if (user?.password) return true
 	// users have to have more than one remaining connection to delete one
 	return Boolean(user?._count.connections && user?._count.connections > 1)
