@@ -31,7 +31,7 @@ lease:
 exec:
   - cmd: node ./other/setup-swap.js
 
-  - cmd: npx prisma db push
+  - cmd: npx prisma migrate deploy
     if-candidate: true
 
   - cmd: npm start
