@@ -56,7 +56,11 @@ async function createUserRoleIfNotExists(roleData: UserRoleData): Promise<string
 // }
 
 async function main(): Promise<void> {
-	await clearDatabase();
+	try {
+		await clearDatabase();
+	} catch (error) {
+		console.error('Error clearing database:');
+	}
 
 	const userImages =  await getUserImages()
 
