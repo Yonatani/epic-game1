@@ -22,7 +22,7 @@ kill_timeout = "5s"
 
 [[services]]
   protocol = "tcp"
-  internal_port = 8081
+  internal_port = 8080
   processes = ["app"]
 
   [[services.ports]]
@@ -58,3 +58,4 @@ kill_timeout = "5s"
     grace_period = "10s"
     method = "GET"
     path = "/litefs/health"
+
