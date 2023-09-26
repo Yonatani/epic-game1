@@ -11,7 +11,7 @@ export async function loader({ request }: DataFunctionArgs) {
 		// the goal is to literally get *everything*. Normally you should be
 		// explicit with "select". We're suing select for images because we don't
 		// want to send back the entire blob of the image. We'll send a URL they can
-		// use to download it instead.
+		// use to download it instead
 		include: {
 			image: {
 				select: {
