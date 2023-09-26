@@ -31,8 +31,6 @@ lease:
 exec:
   - cmd: node ./other/setup-swap.js
 
-  - cmd: npx prisma migrate resolve --applied "20230921133906_add_videos_tickets_model_v1"
-
   - cmd: npx prisma migrate deploy
     if-candidate: true
 
