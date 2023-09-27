@@ -22,25 +22,23 @@ for (const [providerName, provider] of Object.entries(providers)) {
 }
 
 export async function getUserId(request: Request) {
-	const cookieSession = await sessionStorage.getSession(
-		request.headers.get('cookie'),
-	)
-	const sessionId = cookieSession.get(sessionKey)
-	if (!sessionId) return null
+	const cookieSession = await sessionStorage.getSession(request.headers.get('cookie'));
+	const sessionId = cookieSession.get(sessionKey);
+	if (!sessionId) return null;
 	const session = await prisma.session.findUnique({
 		select: { user: { select: { id: true } } },
 		where: { id: sessionId, expirationDate: { gt: new Date() } },
-	})
+	});
 	if (!session?.user) {
 		// Perhaps user was deleted?
-		cookieSession.unset(sessionKey)
+		cookieSession.unset(sessionKey);
 		throw redirect('/', {
 			headers: {
 				'set-cookie': await sessionStorage.commitSession(cookieSession),
 			},
-		})
+		});
 	}
-	return session.user.id
+	return session.user.id;
 }
 
 export async function requireUserId(
@@ -110,80 +108,25 @@ export async function resetUserPassword({
 }
 
 export async function signup({
-	email,
-	username,
-	password,
-	name,
-}: {
-	email: User['email']
-	username: User['username']
-	name: User['name']
-	password: string
+								 email,
+								 username,
+								 password,
+								 name,
+							 }: {
+	email: User['email'];
+	username: User['username'];
+	name: User['name'];
+	password: string;
 }) {
-	const hashedPassword = await getPasswordHash(password)
+	const hashedPassword = await getPasswordHash(password);
 
-	const session = await prisma.session.create({
-		data: {
-			expirationDate: getSessionExpirationDate(),
-			user: {
-				create: {
-					email: email.toLowerCase(),
-					username: username.toLowerCase(),
-					name,
-					roles: {
-						create: {
-							role: {
-								connect: {
-									name: "user"
-								}
-							}
-						}
-					},
-					gameRoles: {
-						create: [{
-							type: 'artist',
-							power: 1
-						}, {
-							type: 'critic',
-							power: 1
-						}]
-					},
-					password: {
-						create: {
-							hash: hashedPassword,
-						},
-					},
-				},
-			},
-		},
-		select: { id: true, expirationDate: true },
-	})
-
-	return session
-}
-
-export async function signupWithConnection({
-	email,
-	username,
-	name,
-	providerId,
-	providerName,
-	imageUrl,
-}: {
-	email: User['email']
-	username: User['username']
-	name: User['name']
-	providerId: Connection['providerId']
-	providerName: Connection['providerName']
-	imageUrl?: string
-}) {
 	try {
 		const existingRole = await prisma.role.findUnique({
 			where: { name: 'user' },
 		});
 
-		if(!existingRole) {
-			throw new Error('"User" role does not exist')
+		if (!existingRole) {
+			throw new Error('"User" role does not exist');
 		}
 
 		const session = await prisma.session.create({
@@ -196,21 +139,88 @@ export async function signupWithConnection({
 						name,
 						roles: {
 							create: {
-								role: {
-									connect: {
-										name: "user"
-									}
-								}
-							}
+								roleId: existingRole.id,
+							},
 						},
 						gameRoles: {
-							create: [{
-								type: 'artist',
-								power: 1
-							}, {
-								type: 'critic',
-								power: 1
-							}]
+							create: [
+								{
+									type: 'artist',
+									power: 1,
+								},
+								{
+									type: 'critic',
+									power: 1,
+								},
+							],
+						},
+						password: {
+							create: {
+								hash: hashedPassword,
+							},
+						},
+					},
+				},
+			},
+			select: { id: true, expirationDate: true },
+		});
+
+		return session;
+	} catch (error) {
+		console.error(`Error during signup:`);
+		throw error;
+	}
+}
+
+
+export async function signupWithConnection({
+											   email,
+											   username,
+											   name,
+											   providerId,
+											   providerName,
+											   imageUrl,
+										   }: {
+	email: User['email'];
+	username: User['username'];
+	name: User['name'];
+	providerId: Connection['providerId'];
+	providerName: Connection['providerName'];
+	imageUrl?: string;
+}) {
+	try {
+		const existingRole = await prisma.role.findUnique({
+			where: { name: 'user' },
+		});
+
+		if (!existingRole) {
+			throw new Error('"User" role does not exist');
+		}
+
+		const session = await prisma.session.create({
+			data: {
+				expirationDate: getSessionExpirationDate(),
+				user: {
+					create: {
+						email: email.toLowerCase(),
+						username: username.toLowerCase(),
+						name,
+						roles: {
+							create: {
+								roleId: existingRole.id,
+							},
+						},
+						gameRoles: {
+							create: [
+								{
+									type: 'artist',
+									power: 1,
+								},
+								{
+									type: 'critic',
+									power: 1,
+								},
+							],
 						},
 						connections: { create: { providerId, providerName } },
 						image: imageUrl
@@ -220,13 +230,12 @@ export async function signupWithConnection({
 				},
 			},
 			select: { id: true, expirationDate: true },
-		})
+		});
 
-		return session
-	}
-	catch (error) {
-		console.error(`Error creating user with connection:`)
-		throw error
+		return session;
+	} catch (error) {
+		console.error(`Error creating user with connection:`);
+		throw error;
 	}
 }
 
