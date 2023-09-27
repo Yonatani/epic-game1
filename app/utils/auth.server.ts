@@ -189,12 +189,18 @@ export async function signupWithConnection({
 	imageUrl?: string;
 }) {
 	try {
-		const existingRole = await prisma.role.findUnique({
+		let existingRole = await prisma.role.findUnique({
 			where: { name: 'user' },
 		});
 
 		if (!existingRole) {
-			throw new Error('"User" role does not exist');
+			// Create the role with default settings (no permissions)
+			existingRole = await prisma.role.create({
+				data: {
+					name: 'user',
+					description: 'Default user role created automatically',
+				},
+			});
 		}
 
 		const session = await prisma.session.create({
