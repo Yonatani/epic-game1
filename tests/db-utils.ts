@@ -161,9 +161,11 @@ type ImgReturnType = {
 };
 
 // The type for the userImages variable
-let userImages: Array<Awaited<ReturnType<typeof img>>> | undefined;
+export type ImageType = Awaited<ReturnType<typeof img>>;
 
-export async function getUserImages(): Promise<Array<Awaited<ReturnType<typeof img>>>> {
+let userImages: ImageType[] | undefined;
+
+export async function getUserImages(): Promise<ImageType[]> {
 	if (userImages) return userImages;
 
 	userImages = await Promise.all(
