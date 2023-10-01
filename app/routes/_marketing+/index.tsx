@@ -1,4 +1,5 @@
 import { type V2_MetaFunction } from '@remix-run/node'
+import {Link} from "@remix-run/react";
 import {
 	Tooltip,
 	TooltipContent,
@@ -13,7 +14,12 @@ export default function Index() {
 	return (
 		<main className="relative min-h-screen sm:flex sm:items-center sm:justify-center">
 			<div className="relative sm:pb-16 sm:pt-8">
-				Try to deploy with a change V2
+				<Link to={`/all-users`} className="mt-4 text-blue-500 hover:underline">
+					All Users
+				</Link>
+				<Link to={`/all-videos`} className="mt-4 text-blue-500 hover:underline">
+					All Videos
+				</Link>
 				<div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
 					<div className="relative shadow-xl sm:overflow-hidden sm:rounded-2xl">
 						<div className="absolute inset-0">

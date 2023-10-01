@@ -60,6 +60,7 @@ import { makeTimings, time } from './utils/timing.server.ts'
 import { getToast } from './utils/toast.server.ts'
 import { useOptionalUser, useUser } from './utils/user.ts'
 
+// Define the links for the application, including preloading resources and setting up favicons.
 export const links: LinksFunction = () => {
 	return [
 		// Preload svg sprite as a resource to avoid render blocking
@@ -88,13 +89,16 @@ export const links: LinksFunction = () => {
 	].filter(Boolean)
 }
 
+// Define the metadata for the application, such as the title and description.
+
 export const meta: V2_MetaFunction<typeof loader> = ({ data }) => {
 	return [
-		{ title: data ? 'Epic Notes' : 'Error | Epic Notes' },
+		{ title: data ? 'Epic game' : 'Error | Epic game' },
 		{ name: 'description', content: `Your own captain's log` },
 	]
 }
 
+// The main loader function that fetches necessary data for the root of the application.
 export async function loader({ request }: DataFunctionArgs) {
 	const timings = makeTimings('root loader')
 	const userId = await time(() => getUserId(request), {
@@ -189,6 +193,7 @@ export async function loader({ request }: DataFunctionArgs) {
 	)
 }
 
+// Define the headers for the application, including server timings.
 export const headers: HeadersFunction = ({ loaderHeaders }) => {
 	const headers = {
 		'Server-Timing': loaderHeaders.get('Server-Timing') ?? '',
@@ -200,6 +205,7 @@ const ThemeFormSchema = z.object({
 	theme: z.enum(['system', 'light', 'dark']),
 })
 
+// Handle the action when a user updates their theme preference.
 export async function action({ request }: DataFunctionArgs) {
 	const formData = await request.formData()
 	invariantResponse(
@@ -224,6 +230,7 @@ export async function action({ request }: DataFunctionArgs) {
 	return json({ success: true, submission }, responseInit)
 }
 
+// The main Document structure of the application.
 function Document({
 	children,
 	nonce,
@@ -260,6 +267,7 @@ function Document({
 	)
 }
 
+// The main App component that renders the application layout and content.
 function App() {
 	const data = useLoaderData<typeof loader>()
 	const nonce = useNonce()
@@ -313,6 +321,7 @@ function App() {
 }
 export default withSentry(App)
 
+// A dropdown menu for the user, allowing them to navigate to their profile, notes, or logout.
 function UserDropdown() {
 	const user = useUser()
 	console.log('userDropdown user', user)
@@ -459,6 +468,7 @@ function ThemeSwitch({ userPreference }: { userPreference?: Theme | null }) {
 	)
 }
 
+// An error boundary to handle errors and display a fallback UI.
 export function ErrorBoundary() {
 	// the nonce doesn't rely on the loader so we can access that
 	const nonce = useNonce()
