@@ -1,4 +1,4 @@
-import { type V2_MetaFunction } from '@remix-run/node'
+import { type MetaFunction } from '@remix-run/node'
 import {Link} from "@remix-run/react";
 import {
 	Tooltip,
@@ -8,7 +8,7 @@ import {
 } from '#app/components/ui/tooltip.tsx'
 import { logos, stars } from './logos/logos.ts'
 
-export const meta: V2_MetaFunction = () => [{ title: 'Epic Notes' }]
+export const meta: MetaFunction = () => [{ title: 'Epic Notes' }]
 
 export default function Index() {
 	return (

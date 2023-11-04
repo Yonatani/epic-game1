@@ -2,7 +2,7 @@ import { type User as PrismaUser } from '@prisma/client';
 import {
 	json,
 	type DataFunctionArgs,
- type V2_MetaFunction } from '@remix-run/node'
+ type MetaFunction } from '@remix-run/node'
 
 
 
@@ -25,7 +25,7 @@ type LoaderUser = Pick<PrismaUser, 'id' | 'name' | 'username' | 'email' | 'popul
 	} | null; // Allow it to be null
 	gameRoles: TransformedGameRoles;
 };
-export const meta: V2_MetaFunction = () => [{ title: 'Epic Notes' }];
+export const meta: MetaFunction = () => [{ title: 'Epic Notes' }];
 
 const convertGameRolesToObject = (gameRoles: { type: string; power: number }[]): TransformedGameRoles => {
 	const transformed: TransformedGameRoles = {};

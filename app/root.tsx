@@ -6,7 +6,7 @@ import {
 	type DataFunctionArgs,
 	type HeadersFunction,
 	type LinksFunction,
-	type V2_MetaFunction,
+	type MetaFunction,
 } from '@remix-run/node'
 import {
 	Form,
@@ -91,7 +91,7 @@ export const links: LinksFunction = () => {
 
 // Define the metadata for the application, such as the title and description.
 
-export const meta: V2_MetaFunction<typeof loader> = ({ data }) => {
+export const meta: MetaFunction<typeof loader> = ({ data }) => {
 	return [
 		{ title: data ? 'Epic game' : 'Error | Epic game' },
 		{ name: 'description', content: `Your own captain's log` },
