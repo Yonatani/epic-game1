@@ -1,9 +1,8 @@
-import matchers from '@testing-library/jest-dom/matchers.js'
 import * as setCookieParser from 'set-cookie-parser'
 import { expect } from 'vitest'
 import { sessionKey } from '#app/utils/auth.server.ts'
 import { prisma } from '#app/utils/db.server.ts'
-import { sessionStorage } from '#app/utils/session.server.ts'
+import { authSessionStorage } from '#app/utils/session.server.ts'
 import {
 	type OptionalToast,
 	toastSessionStorage,
@@ -11,8 +10,7 @@ import {
 } from '#app/utils/toast.server.ts'
 import { convertSetCookieToCookie } from '#tests/utils.ts'
 
-import '@testing-library/jest-dom/vitest.d.ts'
-expect.extend(matchers)
+import '@testing-library/jest-dom/vitest'
 
 expect.extend({
 	toHaveRedirect(response: Response, redirectTo?: string) {
@@ -44,8 +42,29 @@ expect.extend({
 			}
 		}
 
+		function toUrl(s?: string | null) {
+			s ??= ''
+			return s.startsWith('http')
+				? new URL(s)
+				: new URL(s, 'https://example.com')
+		}
+
+		function urlsMatch(u1: URL, u2: URL) {
+			const u1SP = new URL(u1).searchParams
+			u1SP.sort()
+			const u2SP = new URL(u2).searchParams
+			u2SP.sort()
+			return (
+				u1.origin === u2.origin &&
+				u1.pathname === u2.pathname &&
+				u1SP.toString() === u2SP.toString() &&
+				u1.hash === u2.hash
+			)
+		}
+
 		return {
-			pass: location === redirectTo,
+			pass:
+				location == redirectTo || urlsMatch(toUrl(location), toUrl(redirectTo)),
 			message: () =>
 				`Expected response to ${
 					this.isNot ? 'not ' : ''
@@ -70,10 +89,10 @@ expect.extend({
 			}
 		}
 
-		const cookieSession = await sessionStorage.getSession(
+		const authSession = await authSessionStorage.getSession(
 			convertSetCookieToCookie(sessionSetCookie),
 		)
-		const sessionValue = cookieSession.get(sessionKey)
+		const sessionValue = authSession.get(sessionKey)
 
 		if (!sessionValue) {
 			return {

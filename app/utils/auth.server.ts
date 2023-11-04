@@ -3,11 +3,11 @@ import { redirect } from '@remix-run/node'
 import bcrypt from 'bcryptjs'
 import { Authenticator } from 'remix-auth'
 import { safeRedirect } from 'remix-utils/safe-redirect'
-import { providers } from './connections.server.ts'
+import { connectionSessionStorage, providers } from './connections.server.ts'
 import { prisma } from './db.server.ts'
 import { combineHeaders, downloadFile } from './misc.tsx'
 import { type ProviderUser } from './providers/provider.ts'
-import { sessionStorage } from './session.server.ts'
+import { authSessionStorage } from './session.server.ts'
 
 export const SESSION_EXPIRATION_TIME = 1000 * 60 * 60 * 24 * 30
 export const getSessionExpirationDate = () =>
@@ -15,14 +15,14 @@ export const getSessionExpirationDate = () =>
 
 export const sessionKey = 'sessionId'
 
-export const authenticator = new Authenticator<ProviderUser>(sessionStorage)
+export const authenticator = new Authenticator<ProviderUser>(connectionSessionStorage)
 
 for (const [providerName, provider] of Object.entries(providers)) {
 	authenticator.use(provider.getAuthStrategy(), providerName)
 }
 
 export async function getUserId(request: Request) {
-	const cookieSession = await sessionStorage.getSession(request.headers.get('cookie'));
+	const cookieSession = await authSessionStorage.getSession(request.headers.get('cookie'));
 	const sessionId = cookieSession.get(sessionKey);
 	if (!sessionId) return null;
 	const session = await prisma.session.findUnique({
@@ -34,7 +34,7 @@ export async function getUserId(request: Request) {
 		cookieSession.unset(sessionKey);
 		throw redirect('/', {
 			headers: {
-				'set-cookie': await sessionStorage.commitSession(cookieSession),
+				'set-cookie': await authSessionStorage.commitSession(cookieSession),
 			},
 		});
 	}
@@ -261,16 +261,17 @@ export async function logout(
 	},
 	responseInit?: ResponseInit,
 ) {
-	const cookieSession = await sessionStorage.getSession(
+	const authSession = await authSessionStorage.getSession(
 		request.headers.get('cookie'),
 	)
-	const sessionId = cookieSession.get(sessionKey)
-	await prisma.session.delete({ where: { id: sessionId } })
-	cookieSession.unset(sessionKey)
+	const sessionId = authSession.get(sessionKey)
+	// if this fails, we still need to delete the session from the user's browser
+	// and it doesn't do any harm staying in the db anyway.
+	if (sessionId) void prisma.session.deleteMany({ where: { id: sessionId } })
 	throw redirect(safeRedirect(redirectTo), {
 		...responseInit,
 		headers: combineHeaders(
-			{ 'set-cookie': await sessionStorage.commitSession(cookieSession) },
+			{ 'set-cookie': await authSessionStorage.destroySession(authSession) },
 			responseInit?.headers,
 		),
 	})

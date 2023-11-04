@@ -28,7 +28,7 @@ import { redirectWithConfetti } from '#app/utils/confetti.server.ts'
 import { ProviderNameSchema } from '#app/utils/connections.tsx'
 import { prisma } from '#app/utils/db.server.ts'
 import { invariant, useIsPending } from '#app/utils/misc.tsx'
-import { sessionStorage } from '#app/utils/session.server.ts'
+import { authSessionStorage } from '#app/utils/session.server.ts'
 import { NameSchema, UsernameSchema } from '#app/utils/user-validation.ts'
 import { verifySessionStorage } from '#app/utils/verification.server.ts'
 import { type VerifyFunctionArgs } from './verify.tsx'
@@ -49,9 +49,9 @@ const SignupFormSchema = z.object({
 })
 
 async function requireData({
-	request,
-	params,
-}: {
+							   request,
+							   params,
+						   }: {
 	request: Request
 	params: Params
 }) {
@@ -78,7 +78,7 @@ async function requireData({
 
 export async function loader({ request, params }: DataFunctionArgs) {
 	const { email } = await requireData({ request, params })
-	const cookieSession = await sessionStorage.getSession(
+	const authSession = await authSessionStorage.getSession(
 		request.headers.get('cookie'),
 	)
 	const verifySession = await verifySessionStorage.getSession(
@@ -86,15 +86,14 @@ export async function loader({ request, params }: DataFunctionArgs) {
 	)
 	const prefilledProfile = verifySession.get(prefilledProfileKey)
 
-	const formError = cookieSession.get(authenticator.sessionErrorKey)
+	const formError = authSession.get(authenticator.sessionErrorKey)
 
 	return json({
 		email,
-		formError: typeof formError === 'string' ? formError : null,
 		status: 'idle',
 		submission: {
 			intent: '',
-			payload: (prefilledProfile ?? {}) as {},
+			payload: (prefilledProfile ?? {}) as Record<string, unknown>,
 			error: {
 				'': typeof formError === 'string' ? [formError] : [],
 			},
@@ -147,14 +146,14 @@ export async function action({ request, params }: DataFunctionArgs) {
 
 	const { session, remember, redirectTo } = submission.value
 
-	const cookieSession = await sessionStorage.getSession(
+	const authSession = await authSessionStorage.getSession(
 		request.headers.get('cookie'),
 	)
-	cookieSession.set(sessionKey, session.id)
+	authSession.set(sessionKey, session.id)
 	const headers = new Headers()
 	headers.append(
 		'set-cookie',
-		await sessionStorage.commitSession(cookieSession, {
+		await authSessionStorage.commitSession(authSession, {
 			expires: remember ? session.expirationDate : undefined,
 		}),
 	)
@@ -166,14 +165,9 @@ export async function action({ request, params }: DataFunctionArgs) {
 	return redirectWithConfetti(safeRedirect(redirectTo), { headers })
 }
 
-export async function handleVerification({
-	request,
-	submission,
-}: VerifyFunctionArgs) {
+export async function handleVerification({ submission }: VerifyFunctionArgs) {
 	invariant(submission.value, 'submission.value should be defined by now')
-	const verifySession = await verifySessionStorage.getSession(
-		request.headers.get('cookie'),
-	)
+	const verifySession = await verifySessionStorage.getSession()
 	verifySession.set(onboardingEmailSessionKey, submission.value.target)
 	return redirect('/onboarding', {
 		headers: {
@@ -194,7 +188,7 @@ export default function SignupRoute() {
 	const redirectTo = searchParams.get('redirectTo')
 
 	const [form, fields] = useForm({
-		id: 'signup-form',
+		id: 'onboarding-provider-form',
 		constraint: getFieldsetConstraint(SignupFormSchema),
 		lastSubmission: actionData?.submission ?? data.submission,
 		onValidate({ formData }) {
