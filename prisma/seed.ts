@@ -1,6 +1,8 @@
 import {faker} from "@faker-js/faker";
 import { PrismaClient } from '@prisma/client';
+import {giveTicket} from "#app/videoEndorsements.js";
 import { createPassword, getUserImages, type ImageType } from '#tests/db-utils.ts';
+
 
 const prisma = new PrismaClient();
 
@@ -16,20 +18,26 @@ const rolesData: UserRoleData[] = [
 ];
 
 export async function clearDatabase() {
+	// Start by deleting the tables with foreign keys
+	await prisma.videoComment.deleteMany();
+	await prisma.roleTicket.deleteMany();
+	await prisma.ticket.deleteMany();
+	await prisma.report.deleteMany();
+	await prisma.userGameRole.deleteMany();
+	await prisma.userRole.deleteMany();
+	await prisma.permission.deleteMany();
 	await prisma.userImage.deleteMany();
 	await prisma.session.deleteMany();
 	await prisma.password.deleteMany();
 	await prisma.verification.deleteMany();
 	await prisma.connection.deleteMany();
-	await prisma.ticket.deleteMany();
-	await prisma.report.deleteMany();
-	await prisma.videoComment.deleteMany();
-	await prisma.userGameRole.deleteMany();
-	await prisma.userRole.deleteMany();
-	await prisma.permission.deleteMany();
-	await prisma.role.deleteMany();
+
+	// Then delete the tables being referenced
+	await prisma.video.deleteMany();
 	await prisma.user.deleteMany();
+	await prisma.role.deleteMany();
 }
+
 
 async function createUserRoleIfNotExists(roleData: UserRoleData): Promise<string> {
 	try {
@@ -130,6 +138,47 @@ const createCommentForCritic = async (userId: string)=> {
 	}
 }
 
+async function giveMockTicket(): Promise<void> {
+	// Fetch all user IDs
+	const allUserIds = await prisma.user.findMany({
+		select: {
+			id: true
+		}
+	});
+
+	// Randomly select a user ID
+	const randomUserId = allUserIds[Math.floor(Math.random() * allUserIds.length)].id;
+
+	// Fetch the user with the selected ID
+	const randomUser = await prisma.user.findUnique({
+		where: {
+			id: randomUserId
+		}
+	});
+
+	if (!randomUser) {
+		console.error('Random user not found.');
+		return;
+	}
+
+
+	// Fetch a random video not owned by the selected user
+	const randomVideo = await prisma.video.findFirst({
+		where: {
+			ownerId: {
+				not: randomUser.id
+			}
+		},
+		orderBy: {
+			createdAt: 'desc'
+		}
+	});
+
+	if (randomUser && randomVideo) {
+		await giveTicket({ userId: randomUser.id, videoId: randomVideo.id });
+	}
+}
+
 
 const createRandomUser = async (index: number ,userImages: ImageType[], roleIds: Record<string, any>) => {
 	const userData = {
@@ -181,7 +230,7 @@ async function main(): Promise<void> {
 	try {
 		await clearDatabase();
 	} catch (error) {
-		console.error('Error clearing database:');
+		console.error('Error clearing database:', error);
 	}
 
 	// Creating user roles
@@ -200,6 +249,14 @@ async function main(): Promise<void> {
 	}
 
 	console.log(`${totalUsers} mock users were created! this also created some videos and comments`);
+
+	// Creating mock tickets
+	const totalTickets = 20; // or any number you prefer
+	for (let index = 0; index < totalTickets; index++) {
+		await giveMockTicket();
+	}
+
+	console.log(`${totalTickets} mock tickets were created!`);
 }
 
 main()

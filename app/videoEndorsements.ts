@@ -16,27 +16,28 @@ async function giveTicket(input: TicketInput): Promise<void> {
     // Calculate the total power from all roles
     const totalPower = userGameRoles.reduce((sum, role) => sum + role.power, 0);
 
-    // Create a Ticket entry with the total power
-    await prisma.ticket.create({
-        data: {
-            userId: userId,
-            videoId: videoId,
-            totalPower: totalPower,
-            roleTickets: {
-                create: userGameRoles.map(role => ({
-                    roleType: role.type,
-                    power: role.power
-                }))
+    // Create a Ticket entry with the total power and update the video's total ticket value
+    await prisma.$transaction([
+        prisma.ticket.create({
+            data: {
+                userId: userId,
+                videoId: videoId,
+                totalPower: totalPower,
+                roleTickets: {
+                    create: userGameRoles.map(role => ({
+                        roleType: role.type,
+                        power: role.power
+                    }))
+                }
             }
-        }
-    });
-
-    // Update the video's total ticket value
-    await prisma.video.update({
-        where: { id: videoId },
-        data: { totalTickets: { increment: totalPower } },
-    });
+        }),
+        prisma.video.update({
+            where: { id: videoId },
+            data: { totalTickets: { increment: totalPower } },
+        })
+    ]);
 }
+
 
 async function removeTicket(input: TicketInput): Promise<void> {
     const { userId, videoId } = input;
