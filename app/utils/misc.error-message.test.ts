@@ -1,30 +1,24 @@
-import 'dotenv/config'
-import './db-setup.ts'
-import '#app/utils/env.server.ts'
-// we need these to be imported first 👆
+import { faker } from '@faker-js/faker'
+import { expect, test } from 'vitest'
+import { consoleError } from '#tests/setup/setup-test-env.ts'
+import { getErrorMessage } from './misc.tsx'
 
-import { installGlobals } from '@remix-run/node'
-import { cleanup } from '@testing-library/react'
-import { afterEach, beforeEach, vi, type SpyInstance } from 'vitest'
-import { server } from '#tests/mocks/index.ts'
-import './custom-matchers.ts'
+test('Error object returns message', () => {
+	const message = faker.lorem.words(2)
+	expect(getErrorMessage(new Error(message))).toBe(message)
+})
 
-installGlobals()
+test('String returns itself', () => {
+	const message = faker.lorem.words(2)
+	expect(getErrorMessage(message)).toBe(message)
+})
 
-afterEach(() => server.resetHandlers())
-afterEach(() => cleanup())
-
-export let consoleError: SpyInstance<Parameters<(typeof console)['error']>>
-
-beforeEach(() => {
-	const originalConsoleError = console.error
-	consoleError = vi.spyOn(console, 'error')
-	consoleError.mockImplementation(
-		(...args: Parameters<typeof console.error>) => {
-			originalConsoleError(...args)
-			throw new Error(
-				'Console error was called. Call consoleError.mockImplementation(() => {}) if this is expected.',
-			)
-		},
+test('undefined falls back to Unknown', () => {
+	consoleError.mockImplementation(() => {})
+	expect(getErrorMessage(undefined)).toBe('Unknown Error')
+	expect(consoleError).toHaveBeenCalledWith(
+		'Unable to get error message for error',
+		undefined,
 	)
+	expect(consoleError).toHaveBeenCalledTimes(1)
 })
