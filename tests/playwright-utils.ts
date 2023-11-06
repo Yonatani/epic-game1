@@ -80,13 +80,13 @@ export const test = base.extend<{
 	login(options?: GetOrInsertUserOptions): Promise<User>
 }>({
 	insertNewUser: async ({}, use) => {
-		let userId: string | undefined = undefined
+		//let userId: string | undefined = undefined
 		await use(async options => {
 			const user = await getOrInsertUser(options)
-			userId = user.id
+			//userId = user.id
 			return user
 		})
-		await prisma.user.delete({ where: { id: userId } }).catch(() => {})
+		// await prisma.user.delete({ where: { id: userId } }).catch((error) => {console.log('error:', error)})
 	},
 	login: async ({ page }, use) => {
 		let userName: string | undefined = undefined
