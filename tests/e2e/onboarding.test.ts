@@ -1,5 +1,4 @@
 import { faker } from '@faker-js/faker'
-import { prisma } from '#app/utils/db.server.ts'
 import { invariant } from '#app/utils/misc.tsx'
 import { readEmail } from '#tests/mocks/utils.ts'
 import { createUser, expect, test as base } from '#tests/playwright-utils.ts'
@@ -21,6 +20,7 @@ const test = base.extend<{
 }>({
 	getOnboardingData: async ({}, use) => {
 		const userData = createUser()
+		console.log('userData',userData)
 		await use(() => {
 			const onboardingData = {
 				...userData,
@@ -28,7 +28,7 @@ const test = base.extend<{
 			}
 			return onboardingData
 		})
-		await prisma.user.deleteMany({ where: { username: userData.username } })
+		//await deleteUserByUsername(userData.username)
 	},
 })
 

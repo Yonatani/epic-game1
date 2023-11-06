@@ -3,6 +3,7 @@ import { faker } from '@faker-js/faker'
 import { type PrismaClient } from '@prisma/client'
 import bcrypt from 'bcryptjs'
 import { UniqueEnforcer } from 'enforce-unique'
+import {prisma} from "#app/utils/db.server.js";
 
 const uniqueUsernameEnforcer = new UniqueEnforcer()
 
@@ -90,27 +91,27 @@ export async function getNoteImages() {
 
 export async function cleanupDb(prisma: PrismaClient) {
 	console.log('1111111')
-	prisma.user.deleteMany()
-	prisma.userRole.deleteMany()
-	prisma.userGameRole.deleteMany()
-	prisma.videoComment.deleteMany()
-	prisma.noteComment.deleteMany()
-	prisma.password.deleteMany()
-	prisma.verification.deleteMany()
+	// prisma.user.deleteMany()
+	// prisma.userRole.deleteMany()
+	// prisma.userGameRole.deleteMany()
+	// prisma.videoComment.deleteMany()
+	// prisma.noteComment.deleteMany()
+	// prisma.password.deleteMany()
+	// prisma.verification.deleteMany()
 
-	// const tables = await prisma.$queryRaw<
-	// 	{ name: string }[]
-	// >`SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_prisma_migrations';`
-	//
-	// await prisma.$transaction([
-	// 	// Disable FK constraints to avoid relation conflicts during deletion
-	// 	prisma.$executeRawUnsafe(`PRAGMA foreign_keys = OFF`),
-	// 	// Delete all rows from each table, preserving table structures
-	// 	...tables.map(({ name }) =>
-	// 		prisma.$executeRawUnsafe(`DELETE from "${name}"`),
-	// 	),
-	// 	prisma.$executeRawUnsafe(`PRAGMA foreign_keys = ON`),
-	// ])
+	const tables = await prisma.$queryRaw<
+		{ name: string }[]
+	>`SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_prisma_migrations';`
+
+	await prisma.$transaction([
+		// Disable FK constraints to avoid relation conflicts during deletion
+		prisma.$executeRawUnsafe(`PRAGMA foreign_keys = OFF`),
+		// Delete all rows from each table, preserving table structures
+		...tables.map(({ name }) =>
+			prisma.$executeRawUnsafe(`DELETE from "${name}"`),
+		),
+		prisma.$executeRawUnsafe(`PRAGMA foreign_keys = ON`),
+	])
 }
 
 export type ImageType = Awaited<ReturnType<typeof img>>;
@@ -148,4 +149,62 @@ export async function img({ altText, filepath }: ImgParams): Promise<ImgReturnTy
 		contentType: filepath.endsWith('.png') ? 'image/png' : 'image/jpeg',
 		blob: await fs.promises.readFile(filepath),
 	};
+}
+
+export async function deleteUserByUsername(username: string): Promise<void> {
+	// Start a transaction to delete the user and all related records
+	await prisma.$transaction(async (prisma) => {
+		// Find user by username first
+		const user = await prisma.user.findUnique({
+			where: { username },
+		});
+
+		if (!user) {
+			throw new Error('User not found');
+		}
+
+		const userId = user.id;
+
+		// The following deleteMany calls can be omitted if `onDelete: Cascade` is working as expected.
+		await prisma.session.deleteMany({ where: { userId } });
+		await prisma.ticket.deleteMany({ where: { userId } });
+		await prisma.report.deleteMany({ where: { userId } });
+		await prisma.userRole.deleteMany({ where: { userId } });
+		await prisma.connection.deleteMany({ where: { userId } });
+		await prisma.password.deleteMany({ where: { userId } });
+		await prisma.userImage.deleteMany({ where: { userId } });
+		await prisma.video.deleteMany({ where: { ownerId: userId } });
+		await prisma.note.deleteMany({ where: { ownerId: userId } });
+
+		// Finally, delete the user
+		await prisma.user.delete({ where: { id: userId } });
+	});
+
+	console.log(`User with username ${username} and all related records have been deleted.`);
+}
+
+export async function deleteUser(userId: string): Promise<void> {
+	// Start a transaction to delete the user and all related records
+	await prisma.$transaction(async (prisma) => {
+		// You may not need these if `onDelete: Cascade` is working as expected
+		// but they're here as an explicit way to show deletions.
+		await prisma.session.deleteMany({ where: { userId } });
+		await prisma.ticket.deleteMany({ where: { userId } });
+		await prisma.report.deleteMany({ where: { userId } });
+		await prisma.userRole.deleteMany({ where: { userId } });
+		await prisma.connection.deleteMany({ where: { userId } });
+		await prisma.password.deleteMany({ where: { userId } });
+		await prisma.userImage.deleteMany({ where: { userId } });
+
+		// Deleting videos will also delete related video comments and reports due to cascading
+		await prisma.video.deleteMany({ where: { ownerId: userId } });
+
+		// Deleting notes will also delete related note comments, images, and reports due to cascading
+		await prisma.note.deleteMany({ where: { ownerId: userId } });
+
+		// Finally, delete the user
+		await prisma.user.delete({ where: { id: userId } });
+	});
+
+	console.log(`User with ID ${userId} and all related records have been deleted.`);
 }

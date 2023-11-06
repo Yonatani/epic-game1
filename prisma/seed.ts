@@ -1,6 +1,6 @@
 import {faker} from "@faker-js/faker";
 import { PrismaClient } from '@prisma/client';
-import {giveTicket} from "#app/videoEndorsements.js";
+import {giveTicket} from "#app/videoEndorsements.ts";
 import { createPassword, getUserImages, type ImageType } from '#tests/db-utils.ts';
 
 

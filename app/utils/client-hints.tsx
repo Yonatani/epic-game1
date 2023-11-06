@@ -6,7 +6,7 @@ import { useRevalidator } from '@remix-run/react'
 import * as React from 'react'
 import { useRequestInfo } from './request-info.ts'
 
-export const clientHints = {
+const clientHints = {
 	theme: {
 		cookieName: 'CH-prefers-color-scheme',
 		getValueCode: `window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'`,
@@ -49,8 +49,8 @@ export function getHints(request?: Request) {
 		typeof document !== 'undefined'
 			? document.cookie
 			: typeof request !== 'undefined'
-			? request.headers.get('Cookie') ?? ''
-			: ''
+				? request.headers.get('Cookie') ?? ''
+				: ''
 
 	return Object.entries(clientHints).reduce(
 		(acc, [name, hint]) => {
@@ -67,8 +67,8 @@ export function getHints(request?: Request) {
 		},
 		{} as {
 			[name in ClientHintNames]: (typeof clientHints)[name] extends {
-				transform: (value: any) => infer ReturnValue
-			}
+					transform: (value: any) => infer ReturnValue
+				}
 				? ReturnValue
 				: (typeof clientHints)[name]['fallback']
 		},
@@ -95,7 +95,7 @@ export function ClientHintCheck({ nonce }: { nonce: string }) {
 		function handleThemeChange() {
 			document.cookie = `${clientHints.theme.cookieName}=${
 				themeQuery.matches ? 'dark' : 'light'
-			}`
+			}; Max-Age=31536000; Path=/`
 			revalidate()
 		}
 		themeQuery.addEventListener('change', handleThemeChange)
@@ -117,16 +117,16 @@ const cookies = document.cookie.split(';').map(c => c.trim()).reduce((acc, cur) 
 let cookieChanged = false;
 const hints = [
 ${Object.values(clientHints)
-	.map(hint => {
-		const cookieName = JSON.stringify(hint.cookieName)
-		return `{ name: ${cookieName}, actual: String(${hint.getValueCode}), cookie: cookies[${cookieName}] }`
-	})
-	.join(',\n')}
+					.map(hint => {
+						const cookieName = JSON.stringify(hint.cookieName)
+						return `{ name: ${cookieName}, actual: String(${hint.getValueCode}), cookie: cookies[${cookieName}] }`
+					})
+					.join(',\n')}
 ];
 for (const hint of hints) {
 	if (decodeURIComponent(hint.cookie) !== hint.actual) {
 		cookieChanged = true;
-		document.cookie = encodeURIComponent(hint.name) + '=' + encodeURIComponent(hint.actual) + ';path=/';
+		document.cookie = encodeURIComponent(hint.name) + '=' + encodeURIComponent(hint.actual) + '; Max-Age=31536000; path=/';
 	}
 }
 // if the cookie changed, reload the page, unless the browser doesn't support

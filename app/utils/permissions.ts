@@ -1,22 +1,14 @@
-import { PrismaClient } from '@prisma/client';
-import { json } from '@remix-run/node';
-import {useUser} from "#app/utils/user.js";
+import { json } from '@remix-run/node'
+import { requireUserId } from './auth.server.ts'
+import { prisma } from './db.server.ts'
+import { type useUser } from './user.ts'
 
-const prisma = new PrismaClient();
-
-type PermissionString = string;
-type UserId = string;
-
-async function requireUserId(request: Request): Promise<UserId> {
-	// I'm assuming that the `requireUserId` function returns the userId string or throws an error.
-	// Adjust this mockup as necessary.
-	return "mockUserId";
-}
-
-export async function requireUserWithPermission(request: Request, permission: PermissionString): Promise<UserId> {
-	const userId = await requireUserId(request);
-	const permissionData = parsePermissionString(permission);
-
+export async function requireUserWithPermission(
+	request: Request,
+	permission: PermissionString,
+) {
+	const userId = await requireUserId(request)
+	const permissionData = parsePermissionString(permission)
 	const user = await prisma.user.findFirst({
 		select: { id: true },
 		where: {
@@ -34,8 +26,7 @@ export async function requireUserWithPermission(request: Request, permission: Pe
 				},
 			},
 		},
-	});
-
+	})
 	if (!user) {
 		throw json(
 			{
@@ -44,15 +35,13 @@ export async function requireUserWithPermission(request: Request, permission: Pe
 				message: `Unauthorized: required permissions: ${permission}`,
 			},
 			{ status: 403 },
-		);
+		)
 	}
-
-	return user.id;
+	return user.id
 }
 
-export async function requireUserWithRole(request: Request, name: string): Promise<UserId> {
-	const userId = await requireUserId(request);
-
+export async function requireUserWithRole(request: Request, name: string) {
+	const userId = await requireUserId(request)
 	const user = await prisma.user.findFirst({
 		select: { id: true },
 		where: {
@@ -75,39 +64,42 @@ export async function requireUserWithRole(request: Request, name: string): Promi
 				message: `Unauthorized: required role: ${name}`,
 			},
 			{ status: 403 },
-		);
+		)
 	}
-
-	return user.id;
+	return user.id
 }
 
-type Action = 'create' | 'read' | 'update' | 'delete';
-type Entity = 'user' | 'note';
-type Access = 'own' | 'any' | 'own,any' | 'any,own';
-
-function parsePermissionString(permissionString: PermissionString): { action: Action, entity: Entity, access: Access[] } {
-	const [action, entity, access] = permissionString.split(':');
-
+type Action = 'create' | 'read' | 'update' | 'delete'
+type Entity = 'user' | 'note'
+type Access = 'own' | 'any' | 'own,any' | 'any,own'
+type PermissionString = `${Action}:${Entity}` | `${Action}:${Entity}:${Access}`
+function parsePermissionString(permissionString: PermissionString) {
+	const [action, entity, access] = permissionString.split(':') as [
+		Action,
+		Entity,
+		Access | undefined,
+	]
 	return {
-		action: action as Action,
-		entity: entity as Entity,
-		access: access ? (access.split(',') as Access[]) : [],
-	};
+		action,
+		entity,
+		access: access ? (access.split(',') as Array<Access>) : undefined,
+	}
 }
 
-export function userHasPermission(user: Pick<ReturnType<typeof useUser>, 'roles'> | null | undefined, permission: PermissionString): boolean {
-	if (!user) return false;
-
-	const { action, entity, access } = parsePermissionString(permission);
-
-	return user.roles?.some(userRole =>
-		userRole.permissions?.some(
+export function userHasPermission(
+	user: Pick<ReturnType<typeof useUser>, 'roles'> | null | undefined,
+	permission: PermissionString,
+) {
+	if (!user) return false
+	const { action, entity, access } = parsePermissionString(permission)
+	return user.roles?.some(role =>
+		role.permissions.some(
 			permission =>
 				permission.entity === entity &&
 				permission.action === action &&
 				(!access || access.includes(permission.access)),
 		),
-	) ?? false;
+	)
 }
 
 export function userHasRole(user: Pick<ReturnType<typeof useUser>, 'roles'> | null | undefined, role: string): boolean {

@@ -7,23 +7,19 @@ import {
 	type MetaFunction,
 } from '@remix-run/node'
 import { Form, useActionData, useLoaderData } from '@remix-run/react'
-import { z } from 'zod'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { ErrorList, Field } from '#app/components/forms.tsx'
 import { StatusButton } from '#app/components/ui/status-button.tsx'
 import { requireAnonymous, resetUserPassword } from '#app/utils/auth.server.ts'
 import { prisma } from '#app/utils/db.server.ts'
 import { invariant, useIsPending } from '#app/utils/misc.tsx'
-import { PasswordSchema } from '#app/utils/user-validation.ts'
+import { PasswordAndConfirmPasswordSchema } from '#app/utils/user-validation.ts'
 import { verifySessionStorage } from '#app/utils/verification.server.ts'
 import { type VerifyFunctionArgs } from './verify.tsx'
 
 const resetPasswordUsernameSessionKey = 'resetPasswordUsername'
 
-export async function handleVerification({
-	request,
-	submission,
-}: VerifyFunctionArgs) {
+export async function handleVerification({ submission }: VerifyFunctionArgs) {
 	invariant(submission.value, 'submission.value should be defined by now')
 	const target = submission.value.target
 	const user = await prisma.user.findFirst({
@@ -37,9 +33,7 @@ export async function handleVerification({
 		return json({ status: 'error', submission } as const, { status: 400 })
 	}
 
-	const verifySession = await verifySessionStorage.getSession(
-		request.headers.get('cookie'),
-	)
+	const verifySession = await verifySessionStorage.getSession()
 	verifySession.set(resetPasswordUsernameSessionKey, user.username)
 	return redirect('/reset-password', {
 		headers: {
@@ -48,15 +42,7 @@ export async function handleVerification({
 	})
 }
 
-const ResetPasswordSchema = z
-	.object({
-		password: PasswordSchema,
-		confirmPassword: PasswordSchema,
-	})
-	.refine(({ confirmPassword, password }) => password === confirmPassword, {
-		message: 'The passwords did not match',
-		path: ['confirmPassword'],
-	})
+const ResetPasswordSchema = PasswordAndConfirmPasswordSchema
 
 async function requireResetPasswordUsername(request: Request) {
 	await requireAnonymous(request)
@@ -92,9 +78,7 @@ export async function action({ request }: DataFunctionArgs) {
 	const { password } = submission.value
 
 	await resetUserPassword({ username: resetPasswordUsername, password })
-	const verifySession = await verifySessionStorage.getSession(
-		request.headers.get('cookie'),
-	)
+	const verifySession = await verifySessionStorage.getSession()
 	return redirect('/login', {
 		headers: {
 			'set-cookie': await verifySessionStorage.destroySession(verifySession),

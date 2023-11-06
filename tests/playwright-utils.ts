@@ -89,10 +89,10 @@ export const test = base.extend<{
 		await prisma.user.delete({ where: { id: userId } }).catch(() => {})
 	},
 	login: async ({ page }, use) => {
-		let userId: string | undefined = undefined
+		let userName: string | undefined = undefined
 		await use(async options => {
 			const user = await getOrInsertUser(options)
-			userId = user.id
+			userName = user.name || undefined
 			const session = await prisma.session.create({
 				data: {
 					expirationDate: getSessionExpirationDate(),
@@ -111,8 +111,7 @@ export const test = base.extend<{
 				.addCookies([{ ...cookieConfig, domain: 'localhost' }])
 			return user
 		})
-		await prisma.user.deleteMany({ where: { id: userId } })
-	},
+		await prisma.user.deleteMany({ where: { username: userName } })	},
 })
 export const { expect } = test
 

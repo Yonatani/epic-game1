@@ -1,78 +1,75 @@
-# This file is moved to the root directory before building the image
+# syntax = docker/dockerfile:1
 
-# base node image
-FROM node:18-bookworm-slim as base
+# Adjust NODE_VERSION as desired
+ARG NODE_VERSION=18.18.0
+FROM node:${NODE_VERSION}-slim as base
 
-# set for base and all layer that inherit from it
-ENV NODE_ENV production
+LABEL fly_launch_runtime="Remix/Prisma"
 
-# Install openssl for Prisma
-RUN apt-get update && apt-get install -y fuse3 openssl sqlite3 ca-certificates
+# Remix/Prisma app lives here
+WORKDIR /app
 
-# Install all node_modules, including dev dependencies
-FROM base as deps
+# Set production environment
+ENV NODE_ENV="production"
 
-WORKDIR /myapp
 
-ADD package.json package-lock.json .npmrc ./
-RUN npm install --include=dev
-
-# Setup production node_modules
-FROM base as production-deps
-
-WORKDIR /myapp
-
-COPY --from=deps /myapp/node_modules /myapp/node_modules
-ADD package.json package-lock.json .npmrc ./
-RUN npm prune --omit=dev
-
-# Build the app
+# Throw-away build stage to reduce size of final image
 FROM base as build
 
-WORKDIR /myapp
+# Install packages needed to build node modules
+RUN apt-get update -qq && \
+    apt-get install -y build-essential openssl pkg-config python-is-python3
 
-COPY --from=deps /myapp/node_modules /myapp/node_modules
+# Install node modules
+COPY --link .npmrc package-lock.json package.json ./
+RUN npm ci --include=dev
 
-ADD prisma .
+# Generate Prisma Client
+COPY --link prisma .
 RUN npx prisma generate
 
-ADD . .
+# Copy application code
+COPY --link . .
+
+# Build application
 RUN npm run build
 
-# Finally, build the production image with minimal footprint
+# Remove development dependencies
+RUN npm prune --omit=dev
+
+
+# Final stage for app image
 FROM base
 
-ENV FLY="true"
-ENV LITEFS_DIR="/litefs/data"
-ENV DATABASE_FILENAME="sqlite.db"
-ENV DATABASE_PATH="$LITEFS_DIR/$DATABASE_FILENAME"
-ENV DATABASE_URL="file:$DATABASE_PATH"
-ENV CACHE_DATABASE_FILENAME="cache.db"
-ENV CACHE_DATABASE_PATH="/$LITEFS_DIR/$CACHE_DATABASE_FILENAME"
-ENV INTERNAL_PORT="8080"
-ENV PORT="8081"
-ENV NODE_ENV="production"
+# Install, configure litefs
+COPY --from=flyio/litefs:0.4.0 /usr/local/bin/litefs /usr/local/bin/litefs
+COPY --link other/litefs.yml /etc/litefs.yml
+
+# Install packages needed for deployment
+RUN apt-get update -qq && \
+    apt-get install --no-install-recommends -y ca-certificates fuse3 openssl sqlite3 && \
+    rm -rf /var/lib/apt/lists /var/cache/apt/archives
+
+# Copy built application
+COPY --from=build /app /app
+
+# Setup sqlite3 on a separate volume
+RUN mkdir -p /data /litefs
+VOLUME /data
 
 # add shortcut for connecting to database CLI
 RUN echo "#!/bin/sh\nset -x\nsqlite3 \$DATABASE_URL" > /usr/local/bin/database-cli && chmod +x /usr/local/bin/database-cli
 
-WORKDIR /myapp
+# Entrypoint prepares the database.
+ENTRYPOINT [ "litefs", "mount", "--", "/app/other/docker-entrypoint.js" ]
 
-COPY --from=production-deps /myapp/node_modules /myapp/node_modules
-COPY --from=build /myapp/node_modules/.prisma /myapp/node_modules/.prisma
-
-COPY --from=build /myapp/server-build /myapp/server-build
-COPY --from=build /myapp/build /myapp/build
-COPY --from=build /myapp/public /myapp/public
-COPY --from=build /myapp/package.json /myapp/package.json
-COPY --from=build /myapp/prisma /myapp/prisma
-COPY --from=build /myapp/app/components/ui/icons /myapp/app/components/ui/icons
-
-# prepare for litefs
-COPY --from=flyio/litefs:0.5.4 /usr/local/bin/litefs /usr/local/bin/litefs
-ADD other/litefs.yml /etc/litefs.yml
-RUN mkdir -p /data ${LITEFS_DIR}
-
-ADD . .
-
-CMD ["litefs", "mount"]
+# Start the server by default, this can be overwritten at runtime
+EXPOSE 3000
+ENV DATABASE_FILENAME="sqlite.db"
+ENV LITEFS_DIR="/litefs"
+ENV DATABASE_PATH="$LITEFS_DIR/$DATABASE_FILENAME"
+ENV DATABASE_URL="file://$DATABASE_PATH"
+ENV CACHE_DATABASE_FILENAME="cache.db"
+ENV CACHE_DATABASE_PATH="$LITEFS_DIR/$CACHE_DATABASE_FILENAME"
+ENV PORT=3001
+CMD [ "npm", "run", "start" ]

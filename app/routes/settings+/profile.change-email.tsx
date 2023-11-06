@@ -32,9 +32,9 @@ export const handle: BreadcrumbHandle & SEOHandle = {
 const newEmailAddressSessionKey = 'new-email-address'
 
 export async function handleVerification({
-											 request,
-											 submission,
-										 }: VerifyFunctionArgs) {
+	request,
+	submission,
+}: VerifyFunctionArgs) {
 	await requireRecentVerification(request)
 	invariant(submission.value, 'submission.value should be defined by now')
 
@@ -151,9 +151,9 @@ export async function action({ request }: DataFunctionArgs) {
 }
 
 export function EmailChangeEmail({
-									 verifyUrl,
-									 otp,
-								 }: {
+	verifyUrl,
+	otp,
+}: {
 	verifyUrl: string
 	otp: string
 }) {

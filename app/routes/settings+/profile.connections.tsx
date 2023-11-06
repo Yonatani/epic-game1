@@ -158,9 +158,9 @@ export default function Connections() {
 }
 
 function Connection({
-						connection,
-						canDelete,
-					}: {
+	connection,
+	canDelete,
+}: {
 	connection: SerializeFrom<typeof loader>['connections'][number]
 	canDelete: boolean
 }) {

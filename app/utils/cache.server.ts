@@ -1,4 +1,5 @@
 import fs from 'fs'
+import { remember } from '@epic-web/remember'
 import Database from 'better-sqlite3'
 import {
 	cachified as baseCachified,
@@ -13,12 +14,11 @@ import { LRUCache } from 'lru-cache'
 import { z } from 'zod'
 import { updatePrimaryCacheValue } from '#app/routes/admin+/cache_.sqlite.tsx'
 import { getInstanceInfo, getInstanceInfoSync } from './litefs.server.ts'
-import { singleton } from './singleton.server.ts'
 import { cachifiedTimingReporter, type Timings } from './timing.server.ts'
 
 const CACHE_DATABASE_PATH = process.env.CACHE_DATABASE_PATH
 
-const cacheDb = singleton('cacheDb', createDatabase)
+const cacheDb = remember('cacheDb', createDatabase)
 
 function createDatabase(tryAgain = true): Database.Database {
 	const db = new Database(CACHE_DATABASE_PATH)
@@ -47,7 +47,7 @@ function createDatabase(tryAgain = true): Database.Database {
 	return db
 }
 
-const lru = singleton(
+const lru = remember(
 	'lru-cache',
 	() => new LRUCache<string, CacheEntry<unknown>>({ max: 5000 }),
 )
@@ -154,10 +154,10 @@ export async function searchCacheKeys(search: string, limit: number) {
 }
 
 export async function cachified<Value>({
-	timings,
-	reporter = verboseReporter(),
-	...options
-}: CachifiedOptions<Value> & {
+										   timings,
+										   reporter = verboseReporter(),
+										   ...options
+									   }: CachifiedOptions<Value> & {
 	timings?: Timings
 }): Promise<Value> {
 	return baseCachified({

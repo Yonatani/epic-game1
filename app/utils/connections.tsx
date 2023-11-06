@@ -20,10 +20,10 @@ export const providerIcons: Record<ProviderName, React.ReactNode> = {
 } as const
 
 export function ProviderConnectionForm({
-	redirectTo,
-	type,
-	providerName,
-}: {
+										   redirectTo,
+										   type,
+										   providerName,
+									   }: {
 	redirectTo?: string | null
 	type: 'Connect' | 'Login' | 'Signup'
 	providerName: ProviderName
