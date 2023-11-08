@@ -8,7 +8,7 @@ import {
 } from '#app/utils/auth.server.ts'
 import { prisma } from '#app/utils/db.server.ts'
 import { authSessionStorage } from '#app/utils/session.server.ts'
-import { createUser } from './db-utils.ts'
+import {createUser, deleteUser} from './db-utils.ts'
 
 export * from './db-utils.ts'
 
@@ -80,19 +80,21 @@ export const test = base.extend<{
 	login(options?: GetOrInsertUserOptions): Promise<User>
 }>({
 	insertNewUser: async ({}, use) => {
-		//let userId: string | undefined = undefined
+		let userId: string | undefined = undefined
 		await use(async options => {
 			const user = await getOrInsertUser(options)
-			//userId = user.id
+			userId = user.id
 			return user
 		})
-		// await prisma.user.delete({ where: { id: userId } }).catch((error) => {console.log('error:', error)})
+		if(userId) await deleteUser(userId)
+
+		//await prisma.user.delete({ where: { id: userId } })
 	},
 	login: async ({ page }, use) => {
-		let userName: string | undefined = undefined
+		let userId: string | undefined = undefined
 		await use(async options => {
 			const user = await getOrInsertUser(options)
-			userName = user.name || undefined
+			userId = user.id || undefined
 			const session = await prisma.session.create({
 				data: {
 					expirationDate: getSessionExpirationDate(),
@@ -111,7 +113,11 @@ export const test = base.extend<{
 				.addCookies([{ ...cookieConfig, domain: 'localhost' }])
 			return user
 		})
-		await prisma.user.deleteMany({ where: { username: userName } })	},
+
+		if(userId) await deleteUser(userId)
+	},
+
+		// await prisma.user.deleteMany({ where: { username: userName } })	},
 })
 export const { expect } = test
 

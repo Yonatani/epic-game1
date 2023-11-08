@@ -190,11 +190,20 @@ export async function deleteUser(userId: string): Promise<void> {
 	await prisma.$transaction(async (prisma) => {
 		// You may not need these if `onDelete: Cascade` is working as expected
 		// but they're here as an explicit way to show deletions.
-		await prisma.session.deleteMany({ where: { userId } });
+		try {
+			await prisma.session.deleteMany({ where: { userId } });
+		} catch (e) {
+			console.log(e)
+		}
 		await prisma.ticket.deleteMany({ where: { userId } });
 		await prisma.report.deleteMany({ where: { userId } });
 		await prisma.userRole.deleteMany({ where: { userId } });
-		await prisma.connection.deleteMany({ where: { userId } });
+		// there can be several connections, and while testing they might already be deleted or used by another test
+		try {
+			await prisma.connection.deleteMany({ where: { userId } });
+		} catch (e) {
+			console.log(e)
+		}
 		await prisma.password.deleteMany({ where: { userId } });
 		await prisma.userImage.deleteMany({ where: { userId } });
 
