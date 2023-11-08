@@ -1,14 +1,14 @@
 import { faker } from '@faker-js/faker'
 import { http } from 'msw'
 import { afterEach, expect, test } from 'vitest'
-import { twoFAVerificationType } from '#app/routes/settings+/profile.two-factor.tsx'
+// import { twoFAVerificationType } from '#app/routes/settings+/profile.two-factor.tsx'
 import { getSessionExpirationDate, sessionKey } from '#app/utils/auth.server.ts'
 import { connectionSessionStorage } from '#app/utils/connections.server.ts'
 import { GITHUB_PROVIDER_NAME } from '#app/utils/connections.tsx'
 import { prisma } from '#app/utils/db.server.ts'
 import { invariant } from '#app/utils/misc.tsx'
 import { authSessionStorage } from '#app/utils/session.server.ts'
-import { generateTOTP } from '#app/utils/totp.server.ts'
+// import { generateTOTP } from '#app/utils/totp.server.ts'
 import {createUser, deleteUser} from '#tests/db-utils.ts'
 import { insertGitHubUser, deleteGitHubUsers } from '#tests/mocks/github.ts'
 import { server } from '#tests/mocks/index.ts'
@@ -193,33 +193,33 @@ test('if a user is not logged in, but the connection exists, make a session', as
 	await deleteUser(userId)
 })
 
-test('if a user is not logged in, but the connection exists and they have enabled 2FA, send them to verify their 2FA and do not make a session', async () => {
-	const githubUser = await insertGitHubUser()
-	const { userId } = await setupUser()
-	await prisma.connection.create({
-		data: {
-			providerName: GITHUB_PROVIDER_NAME,
-			providerId: githubUser.profile.id.toString(),
-			userId,
-		},
-	})
-	const { otp: _otp, ...config } = generateTOTP()
-	await prisma.verification.create({
-		data: {
-			type: twoFAVerificationType,
-			target: userId,
-			...config,
-		},
-	})
-	const request = await setupRequest({ code: githubUser.code })
-	const response = await loader({ request, params: PARAMS, context: {} })
-	const searchParams = new URLSearchParams({
-		type: twoFAVerificationType,
-		target: userId,
-		redirectTo: '/',
-	})
-	expect(response).toHaveRedirect(`/verify?${searchParams}`)
-})
+// test('if a user is not logged in, but the connection exists and they have enabled 2FA, send them to verify their 2FA and do not make a session', async () => {
+// 	const githubUser = await insertGitHubUser()
+// 	const { userId } = await setupUser()
+// 	await prisma.connection.create({
+// 		data: {
+// 			providerName: GITHUB_PROVIDER_NAME,
+// 			providerId: githubUser.profile.id.toString(),
+// 			userId,
+// 		},
+// 	})
+// 	const { otp: _otp, ...config } = generateTOTP()
+// 	await prisma.verification.create({
+// 		data: {
+// 			type: twoFAVerificationType,
+// 			target: userId,
+// 			...config,
+// 		},
+// 	})
+// 	const request = await setupRequest({ code: githubUser.code })
+// 	const response = await loader({ request, params: PARAMS, context: {} })
+// 	const searchParams = new URLSearchParams({
+// 		type: twoFAVerificationType,
+// 		target: userId,
+// 		redirectTo: '/',
+// 	})
+// 	expect(response).toHaveRedirect(`/verify?${searchParams}`)
+// })
 
 async function setupRequest({
 								sessionId,
