@@ -153,7 +153,7 @@
     "vitest": "^0.34.5"
   },
   "engines": {
-    "node": "20.1"
+    "node": "20.6.0"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
