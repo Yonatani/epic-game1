@@ -23,6 +23,6 @@ afterEach(async () => {
 
 afterAll(async () => {
 	const { prisma } = await import('#app/utils/db.server.ts')
-	await prisma.$disconnect()
+	prisma.$disconnect()
 	await fsExtra.remove(databasePath)
 })

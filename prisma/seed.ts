@@ -18,6 +18,7 @@ const rolesData: UserRoleData[] = [
 ];
 
 export async function clearDatabase(outsourcePrisma?: PrismaClient): Promise<void> {
+	console.log('123123', !!outsourcePrisma)
 	const prismaSource = outsourcePrisma || prisma;
 	// Start by deleting the tables with foreign keys
 	await prismaSource.videoComment.deleteMany();
