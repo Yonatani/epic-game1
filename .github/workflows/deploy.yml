@@ -67,7 +67,7 @@ jobs:
       - name: ⎔ Setup node
         uses: actions/setup-node@v3
         with:
-          node-version: 20.6.0
+          node-version: 18.9.0
 
       - name: 📥 Download deps
         uses: bahmutov/npm-install@v1
@@ -152,8 +152,6 @@ jobs:
 
       - name: ⎔ Setup node
         uses: actions/setup-node@v3
-        with:
-          node-version: 20.1.0
 
       - name: 👀 Read app name
         uses: SebRollen/toml-action@v1.0.2
