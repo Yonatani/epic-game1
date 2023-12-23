@@ -101,19 +101,19 @@ export async function cleanupDb(prisma: PrismaClient) {
 	// prisma.verification.deleteMany()
 	//await clearDatabase()
 
-	// const tables = await prisma.$queryRaw<
-	// 	{ name: string }[]
-	// >`SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_prisma_migrations';`
-	//
-	// await prisma.$transaction([
-	// 	// Disable FK constraints to avoid relation conflicts during deletion
-	// 	prisma.$executeRawUnsafe(`PRAGMA foreign_keys = OFF`),
-	// 	// Delete all rows from each table, preserving table structures
-	// 	...tables.map(({ name }) =>
-	// 		prisma.$executeRawUnsafe(`DELETE from "${name}"`),
-	// 	),
-	// 	prisma.$executeRawUnsafe(`PRAGMA foreign_keys = ON`),
-	// ])
+	const tables = await prisma.$queryRaw<
+		{ name: string }[]
+	>`SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_prisma_migrations';`
+
+	await prisma.$transaction([
+		// Disable FK constraints to avoid relation conflicts during deletion
+		prisma.$executeRawUnsafe(`PRAGMA foreign_keys = OFF`),
+		// Delete all rows from each table, preserving table structures
+		...tables.map(({ name }) =>
+			prisma.$executeRawUnsafe(`DELETE from "${name}"`),
+		),
+		prisma.$executeRawUnsafe(`PRAGMA foreign_keys = ON`),
+	])
 }
 
 export type ImageType = Awaited<ReturnType<typeof img>>;
@@ -192,9 +192,7 @@ export async function deleteUser(userId: string): Promise<void> {
 		// but they're here as an explicit way to show deletions.
 		try {
 			await prisma.session.deleteMany({ where: { userId } });
-		} catch (e) {
-			console.log(e)
-		}
+
 		await prisma.ticket.deleteMany({ where: { userId } });
 		await prisma.report.deleteMany({ where: { userId } });
 		await prisma.userRole.deleteMany({ where: { userId } });
@@ -215,6 +213,9 @@ export async function deleteUser(userId: string): Promise<void> {
 
 		// Finally, delete the user
 		await prisma.user.delete({ where: { id: userId } });
+		} catch (e) {
+			console.log(e)
+		}
 	});
 
 	console.log(`User with ID ${userId} and all related records have been deleted.`);

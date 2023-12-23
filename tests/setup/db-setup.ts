@@ -1,6 +1,7 @@
 import path from 'node:path'
 import fsExtra from 'fs-extra'
 import { afterAll, afterEach, beforeAll } from 'vitest'
+import {clearDatabase} from "#prisma/seed.js";
 import { cleanupDb } from '#tests/db-utils.ts'
 import { BASE_DATABASE_PATH } from './global-setup.ts'
 
@@ -17,6 +18,7 @@ beforeAll(async () => {
 afterEach(async () => {
 	const { prisma } = await import('#app/utils/db.server.ts')
 	await cleanupDb(prisma)
+	await clearDatabase(prisma);
 })
 
 afterAll(async () => {

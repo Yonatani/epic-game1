@@ -17,25 +17,26 @@ const rolesData: UserRoleData[] = [
 	{ name: 'user', description: 'Regular user with minimal permissions' },
 ];
 
-export async function clearDatabase() {
+export async function clearDatabase(outsourcePrisma?: PrismaClient): Promise<void> {
+	const prismaSource = outsourcePrisma || prisma;
 	// Start by deleting the tables with foreign keys
-	await prisma.videoComment.deleteMany();
-	await prisma.roleTicket.deleteMany();
-	await prisma.ticket.deleteMany();
-	await prisma.report.deleteMany();
-	await prisma.userGameRole.deleteMany();
-	await prisma.userRole.deleteMany();
-	await prisma.permission.deleteMany();
-	await prisma.userImage.deleteMany();
-	await prisma.session.deleteMany();
-	await prisma.password.deleteMany();
-	await prisma.verification.deleteMany();
-	await prisma.connection.deleteMany();
+	await prismaSource.videoComment.deleteMany();
+	await prismaSource.roleTicket.deleteMany();
+	await prismaSource.ticket.deleteMany();
+	await prismaSource.report.deleteMany();
+	await prismaSource.userGameRole.deleteMany();
+	await prismaSource.userRole.deleteMany();
+	await prismaSource.permission.deleteMany();
+	await prismaSource.userImage.deleteMany();
+	await prismaSource.session.deleteMany();
+	await prismaSource.password.deleteMany();
+	await prismaSource.verification.deleteMany();
+	await prismaSource.connection.deleteMany();
 
 	// Then delete the tables being referenced
-	await prisma.video.deleteMany();
-	await prisma.user.deleteMany();
-	await prisma.role.deleteMany();
+	await prismaSource.video.deleteMany();
+	await prismaSource.user.deleteMany();
+	await prismaSource.role.deleteMany();
 }
 
 
