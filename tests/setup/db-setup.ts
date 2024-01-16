@@ -18,7 +18,6 @@ beforeAll(async () => {
 afterEach(async () => {
 	const { prisma } = await import('#app/utils/db.server.ts')
 	await cleanupDb(prisma)
-	await clearDatabase(prisma);
 })
 
 afterAll(async () => {

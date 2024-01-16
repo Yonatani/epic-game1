@@ -33,30 +33,39 @@ model UserRole {
   id          String       @id @default(cuid())
   roleId      String
   userId      String
-  user        User         @relation(fields: [userId], references: [id])
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   role        Role         @relation(fields: [roleId], references: [id])
-  permissions Permission[] @relation("PermissionToUserRole")
+  permissions PermissionToUserRole[]
 }
 
 model UserGameRole {
   id     String @id @default(cuid())
-  userId String
   type   String
   power  Int    @default(0)
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
 }
 
 model Permission {
-  id          String     @id @default(cuid())
+  id          String                 @id @default(cuid())
   action      String
   entity      String
   access      String
-  description String     @default("")
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  roles       UserRole[] @relation("PermissionToUserRole")
+  description String                 @default("")
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+  roles       PermissionToUserRole[]
 
   @@unique([action, entity, access])
+}
+
+model PermissionToUserRole {
+  permissionId String
+  userRoleId   String
+  permission   Permission @relation(fields: [permissionId], references: [id])
+  userRole     UserRole   @relation(fields: [userRoleId], references: [id])
+
+  @@id([permissionId, userRoleId])
 }
 
 model Role {
@@ -105,7 +114,7 @@ model NoteComment {
   userId  String
   noteId  String
   content String
-  note    Note   @relation(fields: [noteId], references: [id])
+  note    Note   @relation(fields: [noteId], references: [id], onDelete: Cascade)
   user    User   @relation(fields: [userId], references: [id])
 }
 
@@ -114,7 +123,7 @@ model VideoComment {
   userId  String
   videoId String
   content String
-  video   Video  @relation(fields: [videoId], references: [id])
+  video   Video  @relation(fields: [videoId], references: [id], onDelete: Cascade)
   user    User   @relation(fields: [userId], references: [id])
 }
 
@@ -209,24 +218,24 @@ model Connection {
 
 model Report {
   id      String  @id @default(cuid())
-  videoId String
+  videoId String?
   userId  String
   reason  String
-  video   Video   @relation(fields: [videoId], references: [id])
-  user    User    @relation(fields: [userId], references: [id])
-  Note    Note?   @relation(fields: [noteId], references: [id])
+  video   Video?  @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Note    Note?   @relation(fields: [noteId], references: [id], onDelete: Cascade)
   noteId  String?
 }
 
 model Ticket {
   id          String       @id @default(cuid())
-  videoId     String
+  videoId     String?
   userId      String
   totalPower  Int
-  video       Video        @relation(fields: [videoId], references: [id])
-  user        User         @relation(fields: [userId], references: [id])
+  video       Video?       @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   roleTickets RoleTicket[]
-  Note        Note?        @relation(fields: [noteId], references: [id])
+  Note        Note?        @relation(fields: [noteId], references: [id], onDelete: Cascade)
   noteId      String?
 }
 
@@ -235,5 +244,5 @@ model RoleTicket {
   ticketId String
   roleType String // e.g., "Artist", "Critic", etc.
   power    Int
-  ticket   Ticket @relation(fields: [ticketId], references: [id])
+  ticket   Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
 }

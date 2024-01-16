@@ -18,7 +18,6 @@ const rolesData: UserRoleData[] = [
 ];
 
 export async function clearDatabase(outsourcePrisma?: PrismaClient): Promise<void> {
-	console.log('123123', !!outsourcePrisma)
 	const prismaSource = outsourcePrisma || prisma;
 	// Start by deleting the tables with foreign keys
 	await prismaSource.videoComment.deleteMany();
@@ -52,8 +51,8 @@ async function createUserRoleIfNotExists(roleData: UserRoleData): Promise<string
 		} catch (error) {
 			throw error;
 		}
-
-		if (!existingRole) {
+		debugger
+		if (!existingRole || existingRole.name !== roleData.name) {
 			existingRole = await prisma.role.create({ data: roleData });
 		}
 
@@ -148,6 +147,11 @@ async function giveMockTicket(): Promise<void> {
 		}
 	});
 
+	// Check if allUserIds array is not empty
+	if (allUserIds.length === 0) {
+		console.error('No users found.');
+		return;
+	}
 	// Randomly select a user ID
 	const randomUserId = allUserIds[Math.floor(Math.random() * allUserIds.length)].id;
 
@@ -182,51 +186,66 @@ async function giveMockTicket(): Promise<void> {
 }
 
 
-const createRandomUser = async (index: number ,userImages: ImageType[], roleIds: Record<string, any>) => {
-	const userData = {
-		email: `user${index}@example.com`,
-		username: `user${index}`,
-		name: `User ${index}`,
-	};
+const createRandomUser = async (index: number , roleIdsCustom: Record<string, any>) => {
+	try {
+		const userData = {
+			email: `user${index}@example.com`,
+			username: `user${index}`,
+			name: `User ${index}`,
+		};
+		const roleIds = roleIdsCustom ? roleIdsCustom : await createRoles();
+		const userImages = await getUserImages();
 
-	const roleName = index === 0 ? 'admin' : index <= 2 ? 'editor' : 'user';
-	//const gameRoleType = index === 0 ? 'artist' : index <= 2 ? 'critic' : null;
-	const gamePowerArtist = Math.floor(Math.random() * 100);
-	const gamePowerCritic = Math.floor(Math.random() * 100);
+		const roleName = index === 0 ? 'admin' : index <= 2 ? 'editor' : 'user';
+		const gamePowerArtist = Math.floor(Math.random() * 100);
+		const gamePowerCritic = Math.floor(Math.random() * 100);
 
-	const createdUser = await prisma.user.create({
-		include: { gameRoles: true },
-		data: {
-			...userData,
-			password: { create: createPassword('zazazaza') },
-			image: { create: userImages[index % userImages.length] },
-			roles: { create: { roleId: roleIds[roleName] } },
-			gameRoles: {
-				create: [{
-					type: 'artist',
-					power: gamePowerArtist
-				}, {
-					type: 'critic',
-					power: gamePowerCritic
-				}]
+		const createdUser = await prisma.user.create({
+			include: { gameRoles: true },
+			data: {
+				...userData,
+				password: { create: createPassword('zazazaza') },
+				image: { create: userImages[index % userImages.length] },
+				roles: { create: { roleId: roleIds[roleName] } },
+				gameRoles: {
+					create: [{
+						type: 'artist',
+						power: gamePowerArtist
+					}, {
+						type: 'critic',
+						power: gamePowerCritic
+					}]
+				},
 			},
-		},
-	}).catch((e) => {
-		console.error('Error creating a user:', e);
-	});
+		});
 
-	// Check game roles and create content for artists and critics
-	if(createdUser && createdUser.gameRoles) {
-		for (let gameRole of createdUser.gameRoles) {
-			if (gameRole.type === 'artist' && gameRole.power > 0) {
-				await createVideoForArtist(createdUser.id);
-			} else if (gameRole.type === 'critic' && gameRole.power > 1) {
-				await createCommentForCritic(createdUser.id);
+		// Check game roles and create content for artists and critics
+		if(createdUser && createdUser.gameRoles) {
+			for (let gameRole of createdUser.gameRoles) {
+				if (gameRole.type === 'artist' && gameRole.power > 0) {
+					await createVideoForArtist(createdUser.id);
+				} else if (gameRole.type === 'critic' && gameRole.power > 1) {
+					await createCommentForCritic(createdUser.id);
+				}
 			}
 		}
+	} catch (error) {
+		console.error('Error in createRandomUser:', error);
 	}
-
 };
+
+const createRoles = async () => {
+	const roleIds: Record<string, string> = {};
+	for (let role of rolesData) {
+		roleIds[role.name] = await createUserRoleIfNotExists(role);
+	}
+	return roleIds;
+}
+
+const createUserImages = async () => {
+	const userImages =  await getUserImages()
+	return userImages;
+}
 
 async function main(): Promise<void> {
 	try {
@@ -236,10 +255,8 @@ async function main(): Promise<void> {
 	}
 
 	// Creating user roles
-	const roleIds: Record<string, string> = {};
-	for (let role of rolesData) {
-		roleIds[role.name] = await createUserRoleIfNotExists(role);
-	}
+	const roleIds = await createRoles();
+
 
 	console.log('User roles were created! (admin, editor, user)');
 
@@ -247,7 +264,7 @@ async function main(): Promise<void> {
 	const userImages =  await getUserImages()
 	const totalUsers = 10;
 	for (let index = 0; index < totalUsers; index++) {
-		await createRandomUser(index, userImages, roleIds);
+		await createRandomUser(index, roleIds);
 	}
 
 	console.log(`${totalUsers} mock users were created! this also created some videos and comments`);

@@ -91,16 +91,6 @@ export async function getNoteImages() {
 }
 
 export async function cleanupDb(prisma: PrismaClient) {
-	console.log('1111111')
-	// prisma.user.deleteMany()
-	// prisma.userRole.deleteMany()
-	// prisma.userGameRole.deleteMany()
-	// prisma.videoComment.deleteMany()
-	// prisma.noteComment.deleteMany()
-	// prisma.password.deleteMany()
-	// prisma.verification.deleteMany()
-	//await clearDatabase()
-
 	const tables = await prisma.$queryRaw<
 		{ name: string }[]
 	>`SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_prisma_migrations';`
@@ -200,7 +190,7 @@ export async function deleteUser(userId: string): Promise<void> {
 		try {
 			await prisma.connection.deleteMany({ where: { userId } });
 		} catch (e) {
-			console.log(e)
+			console.log('bboooomm', e)
 		}
 		await prisma.password.deleteMany({ where: { userId } });
 		await prisma.userImage.deleteMany({ where: { userId } });
