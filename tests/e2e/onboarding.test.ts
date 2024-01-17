@@ -225,7 +225,7 @@ test('reset password with a short code', async ({ page, insertNewUser }) => {
 	invariant(email, 'Email not found')
 	expect(email.subject).toMatch(/password reset/i)
 	expect(email.to).toBe(user.email)
-	expect(email.from).toBe('hello@epicstack.dev')
+	expect(email.from).toBe('hello@epic-game.co')
 	const codeMatch = email.text.match(CODE_REGEX)
 	const code = codeMatch?.groups?.code
 	invariant(code, 'Reset Password code not found')
